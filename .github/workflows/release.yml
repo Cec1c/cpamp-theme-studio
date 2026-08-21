@@ -36,6 +36,15 @@ jobs:
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: '24'
+      - name: Select native Windows ARM64 compiler
+        if: matrix.target == 'windows-arm64'
+        shell: pwsh
+        run: |
+          $clang = Get-Command clang.exe -ErrorAction Stop
+          $clangxx = Get-Command clang++.exe -ErrorAction Stop
+          "CC=$($clang.Source)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "CXX=$($clangxx.Source)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          clang --version
       - name: Validate release tag
         shell: bash
         run: |

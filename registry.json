@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "plugins": [
+    {
+      "id": "cpamp-theme-studio",
+      "name": "CPAMP Theme Studio",
+      "description": "Adds a persistent theme editor to a writable CPA Manager Plus panel.",
+      "author": "Cec1c",
+      "repository": "https://github.com/Cec1c/cpamp-theme-studio",
+      "homepage": "https://github.com/Cec1c/cpamp-theme-studio#readme",
+      "license": "MIT",
+      "tags": [
+        "management",
+        "theme",
+        "ui",
+        "cpamp"
+      ]
+    }
+  ]
+}

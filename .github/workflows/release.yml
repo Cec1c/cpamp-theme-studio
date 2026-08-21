@@ -1,0 +1,102 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            target: windows-amd64
+          - runner: windows-11-arm
+            target: windows-arm64
+          - runner: ubuntu-latest
+            target: linux-amd64
+          - runner: ubuntu-24.04-arm
+            target: linux-arm64
+          - runner: macos-15-intel
+            target: darwin-amd64
+          - runner: macos-latest
+            target: darwin-arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validate release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          [[ "${version}" =~ ^[0-9][0-9A-Za-z.+-]*$ ]]
+      - name: Package Windows plugin
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME.TrimStart('v')
+          ./scripts/package.ps1 -Version $version -Target '${{ matrix.target }}'
+      - name: Package Unix plugin
+        if: runner.os != 'Windows'
+        shell: bash
+        run: ./scripts/package.sh "${GITHUB_REF_NAME#v}" '${{ matrix.target }}'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: dist/cpamp-theme-studio_*.zip
+          if-no-files-found: error
+
+  publish:
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Generate and verify checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          count="$(find dist -maxdepth 1 -type f -name '*.zip' | wc -l)"
+          test "${count}" -eq 6
+          for archive in dist/*.zip; do
+            unzip -t "${archive}" >/dev/null
+          done
+          (
+            cd dist
+            sha256sum cpamp-theme-studio_*.zip | sort -k2
+          ) >dist/checksums.txt
+      - name: Detect prerelease
+        id: release_type
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF_NAME}" == *-* ]]; then
+            echo 'prerelease=true' >>"${GITHUB_OUTPUT}"
+          else
+            echo 'prerelease=false' >>"${GITHUB_OUTPUT}"
+          fi
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          prerelease: ${{ steps.release_type.outputs.prerelease }}
+          files: |
+            dist/cpamp-theme-studio_*.zip
+            dist/checksums.txt
+            registry.json

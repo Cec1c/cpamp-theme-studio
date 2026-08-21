@@ -1,0 +1,10 @@
+/dist/
+/.test-runtime/
+*.dll
+*.so
+*.dylib
+*.h
+*.test
+coverage.out
+.DS_Store
+Thumbs.db

@@ -42,7 +42,38 @@ export ALL_PROXY=http://127.0.0.1:7890
 
 只有执行下载的机器确实运行该代理时才设置。
 
-## 3. 从 Release 安装
+## 3. 通过 CPAMP 插件市场安装（推荐）
+
+CPAMP 当前使用 CPA 的插件商店接口完成发现、下载、校验、落盘和启用。本项目的主要功能是前端代码，但要进入 CPAMP 商店仍需要随 Release 分发最小 CPA 原生桥。
+
+在 CPAMP 的“配置”页加入社区源，或把以下字段最小合并到实际生效的 CPA `config.yaml`：
+
+```yaml
+plugins:
+  enabled: true
+  dir: "/absolute/path/to/cpa/plugins"
+  store-sources:
+    - "https://raw.githubusercontent.com/Cec1c/cpamp-theme-studio/main/registry.json"
+```
+
+`plugins.dir` 强烈建议使用绝对路径。CPA v7.2.138 会把市场安装结果写到：
+
+```text
+<plugins.dir>/<goos>/<goarch>/cpamp-theme-studio-v<version>.<dll|so|dylib>
+```
+
+随后在 CPAMP 中执行：
+
+1. 打开“插件”→“插件商店”，确认自定义来源没有错误。
+2. 搜索 `CPAMP Theme Studio`，选择 Latest 或指定 GitHub Release。
+3. 完成第三方插件确认并点击安装。
+4. 在安装结果中记录版本与实际 `path`，不要假定相对目录落在 CPA 可执行文件旁。
+5. 根据页面提示等待热重载或重启实际 CPA 服务。
+6. 在“已安装插件”中确认 `registered=true`、`effective_enabled=true`，再打开 Theme Studio 页面。
+
+只有同时满足“商店可发现、安装返回成功、实际文件路径正确、插件已注册、页面资源 200”才算市场链路成功。若市场安装失败，不要改用手工复制后宣称市场部署成功；先记录 CPAMP 响应与 CPA 日志，再按下一节做明确标注的手工回退。
+
+## 4. 手工从 Release 安装（回退）
 
 从同一个 Release 下载平台压缩包和 `checksums.txt`。命名规则：
 
@@ -77,9 +108,9 @@ unzip cpamp-theme-studio_<version>_<goos>_<goarch>.zip
 
 CPA 也接受 `cpamp-theme-studio-v0.1.0.dll` 这类带版本名。不要保留多个无版本文件副本。
 
-## 4. 从源码构建
+## 5. 从源码构建
 
-首个 Release 之前，或需要审计服务器所部署的准确源码时，使用此方式。
+只在开发、审计或操作员明确批准手工回退时使用此方式。生产市场部署必须使用已发布且带校验和的 Release；没有 Release 时应停止，而不是在服务器上构建后冒充市场安装。
 
 Windows：
 
@@ -103,7 +134,7 @@ node --check assets/loader.js
 
 需要 Go 1.26+ 和本机 C 编译器。插件使用 CGO `c-shared`，应在与目标相同的系统/架构上构建。
 
-## 5. 配置 CPA
+## 6. 配置 CPA
 
 把以下内容合并进 CPA `config.yaml`，不要覆盖无关配置：
 
@@ -132,7 +163,7 @@ CPA 由特殊启动器启动或工作目录不固定时，请使用绝对路径�
 
 Windows 路径应加引号，并使用正斜杠或转义后的反斜杠。
 
-## 6. 外置 PANEL_PATH 的 Manager Server
+## 7. 外置 PANEL_PATH 的 Manager Server
 
 只有 CPA 与 Manager Server 能看到同一个可写文件时才支持：
 
@@ -146,7 +177,7 @@ Windows 路径应加引号，并使用正斜杠或转义后的反斜杠。
 
 只有内嵌面板的 Manager Server 无法注入，不应宣称该模式可在登录页持久生效。
 
-## 7. 验证
+## 8. 验证
 
 CPA 启动日志应同时出现：
 
@@ -177,7 +208,7 @@ curl -fsS 'http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio?a
 
 不能只看标记就判定成功；插件注册、资源响应和真实浏览器执行都要通过。
 
-## 8. 升级
+## 9. 升级
 
 1. 下载并校验新压缩包，保留旧压缩包/动态库。
 2. CPA 仍在运行时，设置 `plugins.configs.cpamp-theme-studio.enabled: false`，等待标记消失且插件资源返回 404。
@@ -188,7 +219,7 @@ curl -fsS 'http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio?a
 
 CPAMP 更新面板不需要重装插件。`management.html` 被覆盖后，watcher 应在 `watch_seconds` 内恢复 loader。
 
-## 9. 回滚
+## 10. 回滚
 
 1. 在 CPA 配置中停用 `cpamp-theme-studio`，等待标记消失。
 2. 停止 CPA。
@@ -197,7 +228,7 @@ CPAMP 更新面板不需要重装插件。`management.html` 被覆盖后，watch
 
 热停用时清理是确定性的。进程正常关闭时，CPA 可能在原生插件的异步 shutdown 完成前退出，因此清理仅为 best effort。若 CPA 已退出或崩溃导致未清理，可恢复面板备份，或只删除从 start 到 end 的三行。不要删除 `management.html` 中其他脚本。
 
-## 10. 卸载
+## 11. 卸载
 
 1. 设置 `plugins.configs.cpamp-theme-studio.enabled: false`。
 2. 等待标记消失且插件资源返回 404。

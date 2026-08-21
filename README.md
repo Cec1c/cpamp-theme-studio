@@ -2,9 +2,9 @@
 
 [简体中文](README.zh-CN.md) · [Deployment](docs/DEPLOYMENT.md) · [Agent runbook](docs/AGENT_DEPLOYMENT.md)
 
-CPAMP Theme Studio is a standalone CPA plugin that adds a persistent visual theme editor to a writable [CPA Manager Plus](https://github.com/seakee/CPA-Manager-Plus) panel. It keeps the feature outside CPAMP itself, so no upstream pull request or long-lived CPAMP fork is required.
+CPAMP Theme Studio is a frontend theme extension delivered through the CPAMP Plugin Store. It adds a persistent visual theme editor to a writable [CPA Manager Plus](https://github.com/seakee/CPA-Manager-Plus) panel without an upstream pull request or a long-lived CPAMP fork.
 
-The plugin registers a browser resource with CPA, injects one marked `<script>` block into `management.html`, and restores that block whenever a panel update replaces the file. Disabling the plugin removes only its own marked block.
+The theme, editor, and persistence logic live in the browser-side `assets/loader.js`. Because the current CPAMP store, lifecycle controls, and page container reuse CPA's plugin APIs, releases also include a minimal native bridge. The bridge only registers browser resources with CPAMP and maintains one marked `<script>` block in `management.html`; it does not participate in model requests, providers, or traffic routing. Panel updates are reinjected automatically, and disabling the plugin removes only its own block.
 
 ## Compatibility status
 
@@ -46,47 +46,33 @@ Future CPA and CPAMP versions are expected to work while their plugin ABI and si
 
 The plugin runs inside CPA. It cannot rewrite a panel embedded inside a separate Manager Server executable or container image.
 
-## Quick start
+## Recommended install: CPAMP Plugin Store
 
-1. Download the archive for your OS and architecture from GitHub Releases and verify it against `checksums.txt`.
-2. For an upgrade, hot-disable the existing plugin and wait for its markers to disappear. Then stop CPA before replacing a loaded library, especially on Windows.
-3. Extract the library into the platform directory under CPA's plugin root:
-
-```text
-plugins/
-  windows/amd64/cpamp-theme-studio.dll
-  windows/arm64/cpamp-theme-studio.dll
-  linux/amd64/cpamp-theme-studio.so
-  linux/arm64/cpamp-theme-studio.so
-  darwin/amd64/cpamp-theme-studio.dylib
-  darwin/arm64/cpamp-theme-studio.dylib
-```
-
-Only the entry matching the host platform is required.
-
-4. Add this configuration to CPA `config.yaml`:
+The first release uses this repository as a community store source, so no CPAMP or CPA upstream PR is required. Merge these fields into the effective CPA `config.yaml`. Prefer an absolute `dir` so a different systemd working directory cannot redirect the installation:
 
 ```yaml
 plugins:
   enabled: true
-  dir: "plugins"
-  configs:
-    cpamp-theme-studio:
-      enabled: true
-      priority: 10
-      auto_inject: true
-      panel_path: ""
-      host_config_path: ""
-      watch_seconds: 3
+  dir: "/absolute/path/to/cpa/plugins"
+  store-sources:
+    - "https://raw.githubusercontent.com/Cec1c/cpamp-theme-studio/main/registry.json"
 ```
 
-5. Start CPA and open its CPAMP panel. A Theme Studio launcher appears in the lower-right corner. CPA also publishes the plugin menu resource at:
+After saving and reloading the configuration:
+
+1. Open CPAMP, then Plugins → Plugin Store.
+2. Confirm that the sources include `raw.githubusercontent.com` and search for `CPAMP Theme Studio`.
+3. Choose Latest or `v0.1.0` and install it. CPAMP/CPA verifies `checksums.txt`, writes a versioned library under `<dir>/<goos>/<goarch>/`, and creates the enabled plugin configuration.
+4. Restart the effective CPA service if prompted, then confirm `registered` and `effective enabled` on Installed Plugins.
+5. Open the Theme Studio plugin page or return to CPAMP; the launcher should appear in the lower-right corner.
+
+The plugin page resource is:
 
 ```text
 /v0/resource/plugins/cpamp-theme-studio/studio
 ```
 
-For a complete production procedure, verification commands, upgrades, rollback, and uninstall steps, see [Deployment](docs/DEPLOYMENT.md).
+If CPA needs a proxy to reach GitHub, set proxy variables in the service environment. `127.0.0.1:7890` works only when the proxy shares CPA's network namespace. See [Deployment](docs/DEPLOYMENT.md) for store validation, the manual fallback, upgrades, rollback, and uninstall.
 
 ## CPAMP Lightweight Panel configuration
 
@@ -114,9 +100,9 @@ Keep management access bound to localhost or protect it with a trusted reverse p
 
 When `panel_path` is empty, the plugin checks `CPAMP_THEME_PANEL_PATH`, `MANAGEMENT_STATIC_PATH`, and `PANEL_PATH`, followed by `static/management.html` and `management.html` near CPA's working directory and executable.
 
-## Plugin Store source
+## Plugin Store contract
 
-After a GitHub Release exists, this repository can be added as a CPA community registry:
+This repository is a community source that CPAMP can add directly:
 
 ```yaml
 plugins:
@@ -124,7 +110,7 @@ plugins:
     - "https://raw.githubusercontent.com/Cec1c/cpamp-theme-studio/main/registry.json"
 ```
 
-CPA expects release archives named `cpamp-theme-studio_<version>_<goos>_<goarch>.zip` plus `checksums.txt`. The included release workflow generates those assets.
+CPA expects `cpamp-theme-studio_<version>_<goos>_<goarch>.zip` plus `checksums.txt`, and installs the root-level library as `cpamp-theme-studio-v<version>.<ext>`. The release workflow generates six platform archives and an aggregate checksum file.
 
 ## Build from source
 

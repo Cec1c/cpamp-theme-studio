@@ -4,16 +4,16 @@
     {
       "id": "cpamp-theme-studio",
       "name": "CPAMP Theme Studio",
-      "description": "Adds a persistent theme editor to a writable CPA Manager Plus panel.",
+      "description": "Adds a persistent multilingual visual theme editor to the CPAMP management panel. The feature is implemented in browser-side resources; a minimal CPA native bridge exposes it to the CPAMP plugin store and page container.",
       "author": "Cec1c",
+      "version": "0.1.0",
       "repository": "https://github.com/Cec1c/cpamp-theme-studio",
-      "homepage": "https://github.com/Cec1c/cpamp-theme-studio#readme",
+      "homepage": "https://github.com/Cec1c/cpamp-theme-studio",
       "license": "MIT",
       "tags": [
-        "management",
-        "theme",
-        "ui",
-        "cpamp"
+        "Management",
+        "Theme",
+        "Frontend"
       ]
     }
   ]

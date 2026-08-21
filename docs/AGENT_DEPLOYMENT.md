@@ -12,14 +12,15 @@ Deploy Cec1c/cpamp-theme-studio into the existing CPA installation on this serve
 Rules:
 1. Work read-only first. Discover CPA_HOME, the effective config.yaml, plugins.dir, OS/architecture, CPA version, CPAMP panel version/source, process/service manager, and whether the panel is CPA lightweight, Manager Server external PANEL_PATH, or embedded-only.
 2. Do not display, copy, change, or commit Management Keys, API keys, auth files, or unrelated configuration.
-3. Use https://github.com/Cec1c/cpamp-theme-studio as the only plugin source. If downloading, verify checksums.txt before extracting. If no release exists, clone the repository and build natively with its documented script.
+3. Use https://github.com/Cec1c/cpamp-theme-studio as the only plugin source. Require a published GitHub Release and install through CPAMP's plugin-store flow. If no release exists, stop; do not substitute a source build and call it a store deployment.
 4. Do not modify an embedded-only Manager Server panel. Stop and report that external PANEL_PATH is required.
 5. Before writes, back up only the effective CPA config, existing cpamp-theme-studio library, and external management.html. Preserve permissions and ownership.
-6. Merge the minimal plugin YAML block; do not rewrite unrelated YAML. Use absolute panel_path and host_config_path when service working directories are ambiguous.
-7. Before stopping CPA, hot-disable only this plugin and wait for marker cleanup plus a 404 resource response. Process-shutdown cleanup is best effort. Then stop CPA before replacing a loaded library and restart only the in-scope CPA/CPAMP services.
-8. Validate plugin loaded + registered logs, plugin listing, studio HTML, loader JavaScript, exactly one panel marker pair, and a real browser launch/persistence check when browser access exists.
-9. On any failed acceptance check, disable the plugin, wait for marker cleanup, restore backups, restart the previous version, and report the evidence.
-10. Report discovered paths and versions, backup paths, changed files, installed SHA-256, validation results, and anything not tested. Never print secrets.
+6. Merge only plugins.enabled, an absolute plugins.dir, and this repository's registry URL into plugins.store-sources. Do not pre-copy a library or invent a plugin config before testing store discovery.
+7. Use CPAMP's Plugin Store UI or the authenticated CPA plugin-store API to discover and install cpamp-theme-studio. Record the returned version and absolute install path. A file copied by hand is not a successful marketplace deployment.
+8. After store installation, set absolute panel_path and host_config_path only when automatic discovery is ambiguous. Restart only when required by the effective runtime.
+9. Validate plugin loaded + registered logs, plugin listing, studio HTML, loader JavaScript, exactly one panel marker pair, and a real browser launch/persistence check when browser access exists.
+10. On any failed acceptance check, disable the plugin, wait for marker cleanup, restore backups, restart the previous version, and report the evidence.
+11. Report store discovery, install API result/path, release SHA-256, discovered paths and versions, backups, changed files, validation results, and anything not tested. Never print secrets.
 ```
 
 ## Required inputs / 必要参数
@@ -39,6 +40,8 @@ PANEL_PATH=
 SERVICE_MANAGER=systemd|docker-compose|docker|windows-service|manual|other
 DESIRED_VERSION=
 DOWNLOAD_PROXY=optional
+STORE_SOURCE=https://raw.githubusercontent.com/Cec1c/cpamp-theme-studio/main/registry.json
+STORE_INSTALL_PATH=resolved from the install response; never guessed
 ```
 
 If `PANEL_MODE=manager-embedded`, the deployment is not viable yet. The agent should explain how to provide an external `PANEL_PATH` and stop without patching binaries or container layers.
@@ -49,46 +52,28 @@ If `PANEL_MODE=manager-embedded`, the deployment is not viable yet. The agent sh
 
 1. Inspect effective process arguments and working directory; do not rely on a similarly named inactive installation.
 2. Check the listening address. Use loopback for acceptance testing.
-3. Determine the plugin path from effective `plugins.dir`, then append `<goos>/<goarch>`.
+3. Resolve effective `plugins.dir` to an absolute path. If it is relative, resolve it against the live process working directory, not the shell's current directory.
 4. Determine the panel path from the live service/config and verify it is a regular, writable, non-symlink `.html` file under 64 MiB.
-5. Download and verify a release archive, or build on the target host:
-
-```bash
-git clone --depth 1 https://github.com/Cec1c/cpamp-theme-studio.git
-cd cpamp-theme-studio
-go test ./...
-node --check assets/loader.js
-./scripts/package.sh 0.1.0-dev
-```
-
-```powershell
-git clone --depth 1 https://github.com/Cec1c/cpamp-theme-studio.git
-Set-Location .\cpamp-theme-studio
-go test ./...
-node --check .\assets\loader.js
-.\scripts\package.ps1 -Version 0.1.0-dev
-```
-
+5. Confirm the requested GitHub Release exists and contains the matching platform ZIP plus `checksums.txt`. If either is missing, stop.
 6. Create timestamped backups beside an operator-approved backup directory. A backup is not successful until its size and SHA-256 are recorded.
-7. Stop CPA, install the one matching dynamic library, minimally merge the configuration below, and start CPA:
+7. Minimally merge the store bootstrap configuration. Preserve unrelated plugin sources and configurations:
 
 ```yaml
 plugins:
   enabled: true
-  dir: "plugins"
-  configs:
-    cpamp-theme-studio:
-      enabled: true
-      priority: 10
-      auto_inject: true
-      panel_path: "/absolute/path/to/management.html"
-      host_config_path: "/absolute/path/to/config.yaml"
-      watch_seconds: 3
+  dir: "/absolute/path/to/cpa/plugins"
+  store-sources:
+    - "https://raw.githubusercontent.com/Cec1c/cpamp-theme-studio/main/registry.json"
 ```
 
-8. Verify in order:
+8. Reload the effective configuration, then verify the CPAMP Plugin Store lists `cpamp-theme-studio` from that source without a source error.
+9. Install the requested version through CPAMP or `POST /v0/management/plugin-store/cpamp-theme-studio/install?source=<resolved-source-id>&version=<version>`. Use the deployment's existing authenticated management path without printing the key. Record the response `path` and confirm it is under the resolved `<plugins.dir>/<goos>/<goarch>/`.
+10. If panel discovery is ambiguous, update only this plugin's configuration through CPAMP with `auto_inject: true`, absolute `panel_path`, absolute `host_config_path`, and `watch_seconds: 3`. Restart the effective CPA service only if needed.
+11. Verify in order:
 
 ```text
+[ ] CPAMP store lists the plugin from the configured community source
+[ ] store install response reports the requested version and expected absolute path
 [ ] CPA process is healthy and bound only where expected
 [ ] log contains plugin loaded and plugin registered for cpamp-theme-studio
 [ ] authenticated CPA plugin listing says registered=true and effective_enabled=true
@@ -99,8 +84,8 @@ plugins:
 [ ] one setting change persists after browser reload
 ```
 
-9. Simulate an upstream update only in a disposable copy or approved maintenance window: replace the panel with the same official version and confirm reinjection within `watch_seconds`.
-10. Test disable cleanup: set only this plugin's `enabled` to false, confirm the resource becomes 404 and the panel SHA-256 returns to the pre-injection value, then re-enable if deployment is accepted.
+12. Simulate an upstream update only in a disposable copy or approved maintenance window: replace the panel with the same official version and confirm reinjection within `watch_seconds`.
+13. Test disable cleanup: set only this plugin's `enabled` to false, confirm the resource becomes 404 and the panel SHA-256 returns to the pre-injection value, then re-enable if deployment is accepted.
 
 ## Failure and rollback / 失败与回滚
 
@@ -122,6 +107,7 @@ CPA version/path:
 CPAMP version/panel mode/path:
 Platform:
 Plugin source/version/SHA-256:
+Store source/discovery/install response path:
 Backups created:
 Files changed:
 Services restarted:

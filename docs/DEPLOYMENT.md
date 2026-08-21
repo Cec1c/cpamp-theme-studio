@@ -42,7 +42,38 @@ $env:ALL_PROXY = 'http://127.0.0.1:7890'
 
 Use the proxy only when it exists on the machine performing the download.
 
-## 3. Install from a release
+## 3. Install through the CPAMP Plugin Store (recommended)
+
+CPAMP currently uses CPA's plugin-store APIs for discovery, download, verification, installation, and lifecycle control. The product feature is browser-side code, but a minimal CPA native bridge is still shipped so the extension can enter the CPAMP store and page container.
+
+Add the community source on CPAMP's Configuration page, or minimally merge these fields into the effective CPA `config.yaml`:
+
+```yaml
+plugins:
+  enabled: true
+  dir: "/absolute/path/to/cpa/plugins"
+  store-sources:
+    - "https://raw.githubusercontent.com/Cec1c/cpamp-theme-studio/main/registry.json"
+```
+
+An absolute `plugins.dir` is strongly recommended. CPA v7.2.138 writes a store installation to:
+
+```text
+<plugins.dir>/<goos>/<goarch>/cpamp-theme-studio-v<version>.<dll|so|dylib>
+```
+
+Then use CPAMP:
+
+1. Open Plugins → Plugin Store and confirm the custom source has no error.
+2. Search for `CPAMP Theme Studio` and choose Latest or a specific GitHub Release.
+3. Complete the third-party confirmation and install it.
+4. Record the returned version and actual `path`; never assume a relative directory is beside the CPA executable.
+5. Wait for hot reload or restart the effective CPA service when CPAMP requests it.
+6. Confirm `registered=true` and `effective_enabled=true` under Installed Plugins, then open Theme Studio.
+
+The store path passes only when discovery, installation, target path, registration, and the HTTP 200 resource check all succeed. If store installation fails, do not manually copy a library and report a successful store deployment. Capture the CPAMP response and CPA logs first; use the next section only as an explicitly reported manual fallback.
+
+## 4. Install manually from a release (fallback)
 
 Download both the platform archive and `checksums.txt` from the same release. Archive names follow:
 
@@ -77,9 +108,9 @@ Stop CPA, then copy the library into the matching platform directory:
 
 Versioned names such as `cpamp-theme-studio-v0.1.0.dll` are also accepted by CPA. Do not keep multiple unversioned copies.
 
-## 4. Build from source
+## 5. Build from source
 
-Use this path before the first release or when auditing the exact source deployed to a server.
+Use this only for development, audit, or an operator-approved manual fallback. A production store deployment must use a published release with checksums. If no release exists, stop instead of building on the server and presenting it as a store installation.
 
 ```bash
 git clone https://github.com/Cec1c/cpamp-theme-studio.git
@@ -101,7 +132,7 @@ node --check .\assets\loader.js
 
 The build requires Go 1.26+ and a native C compiler. Build on the same OS/architecture as the target because the plugin uses CGO `c-shared` mode.
 
-## 5. Configure CPA
+## 6. Configure CPA
 
 Merge this block into CPA `config.yaml`; do not replace unrelated settings:
 
@@ -130,7 +161,7 @@ If CPA is started with an unusual working directory or wrapper, set absolute pat
 
 On Windows, quote paths and use either forward slashes or escaped backslashes.
 
-## 6. Manager Server with external PANEL_PATH
+## 7. Manager Server with external PANEL_PATH
 
 This mode works only when both processes see the same writable file.
 
@@ -144,7 +175,7 @@ When the two services run in separate containers, mount one host file into both 
 
 An embedded-only Manager Server panel cannot be patched. Do not claim login-page persistence in that mode.
 
-## 7. Verify
+## 8. Verify
 
 After starting CPA, check its logs for both messages:
 
@@ -175,7 +206,7 @@ Then open `management.html` in a browser and verify:
 
 Do not use the marker alone as the health check; registration, resource responses, and real browser execution must also pass.
 
-## 8. Upgrade
+## 9. Upgrade
 
 1. Download and verify the new archive and keep the old archive/library.
 2. Set `plugins.configs.cpamp-theme-studio.enabled: false` while CPA is still running, then wait for the marker block to disappear and the resource route to return 404.
@@ -186,7 +217,7 @@ Do not use the marker alone as the health check; registration, resource response
 
 Panel updates do not require reinstalling the plugin. If CPAMP replaces `management.html`, the watcher should restore the loader within `watch_seconds`.
 
-## 9. Rollback
+## 10. Rollback
 
 1. Disable `cpamp-theme-studio` in CPA config and wait for its marker block to disappear.
 2. Stop CPA.
@@ -195,7 +226,7 @@ Panel updates do not require reinstalling the plugin. If CPAMP replaces `managem
 
 Hot-disable cleanup is deterministic. Normal process-shutdown cleanup is best effort because CPA may exit before asynchronous native-plugin shutdown finishes. If CPA exited or crashed before cleanup, restore the backed-up panel or remove only the three-line block from the start marker through the end marker. Never delete unrelated scripts from `management.html`.
 
-## 10. Uninstall
+## 11. Uninstall
 
 1. Set `plugins.configs.cpamp-theme-studio.enabled: false`.
 2. Wait until the marker block is gone and the resource route returns 404.

@@ -2,9 +2,9 @@
 
 [English](README.md) · [部署文档](docs/DEPLOYMENT.zh-CN.md) · [Agent 部署手册](docs/AGENT_DEPLOYMENT.md)
 
-CPAMP 主题工作室是一个独立 CPA 插件，为可写的 [CPA Manager Plus](https://github.com/seakee/CPA-Manager-Plus) 面板增加可持久化的视觉主题编辑器。功能不再依赖 CPAMP 上游 PR，也不需要长期维护 CPAMP fork。
+CPAMP 主题工作室是一个通过 CPAMP 插件市场交付的前端主题扩展，为可写的 [CPA Manager Plus](https://github.com/seakee/CPA-Manager-Plus) 面板增加可持久化的视觉主题编辑器。功能不再依赖 CPAMP 上游 PR，也不需要长期维护 CPAMP fork。
 
-插件向 CPA 注册浏览器资源，在 `management.html` 中注入一段带唯一标记的 `<script>`。上游面板更新覆盖文件后会自动恢复注入；停用插件时只会移除自己写入的标记块。
+主题、编辑器和持久化逻辑都在浏览器端的 `assets/loader.js` 中。由于当前 CPAMP 的插件市场、启停和页面容器复用 CPA 插件 API，发行包仍包含一个最小原生桥：它只负责向 CPAMP 注册页面资源，并在 `management.html` 中维护一段带唯一标记的 `<script>`；不参与模型请求、Provider 或流量路由。上游面板更新覆盖文件后会自动恢复注入，停用插件时只移除自己的标记块。
 
 ## 兼容状态
 
@@ -46,47 +46,33 @@ CPAMP 主题工作室是一个独立 CPA 插件，为可写的 [CPA Manager Plus
 
 插件运行在 CPA 内，不能改写另一个 Manager Server 可执行文件或容器镜像内嵌的只读面板。
 
-## 快速安装
+## 推荐安装：CPAMP 插件市场
 
-1. 从 GitHub Releases 下载与系统和架构匹配的压缩包，并用 `checksums.txt` 校验。
-2. 升级时先热停用现有插件并等待标记消失，再停止 CPA 后替换已加载的动态库；Windows 下尤其必须这样做。
-3. 将动态库解压到 CPA 插件目录对应的平台子目录：
-
-```text
-plugins/
-  windows/amd64/cpamp-theme-studio.dll
-  windows/arm64/cpamp-theme-studio.dll
-  linux/amd64/cpamp-theme-studio.so
-  linux/arm64/cpamp-theme-studio.so
-  darwin/amd64/cpamp-theme-studio.dylib
-  darwin/arm64/cpamp-theme-studio.dylib
-```
-
-只需要保留与宿主平台匹配的一项。
-
-4. 在 CPA `config.yaml` 中加入：
+首版先使用本仓库提供的社区商店源，不需要向 CPAMP 或 CPA 上游提交 PR。把以下字段合并到 CPA 的有效 `config.yaml`；`dir` 建议使用绝对路径，避免 systemd 工作目录不同导致插件装到了错误位置：
 
 ```yaml
 plugins:
   enabled: true
-  dir: "plugins"
-  configs:
-    cpamp-theme-studio:
-      enabled: true
-      priority: 10
-      auto_inject: true
-      panel_path: ""
-      host_config_path: ""
-      watch_seconds: 3
+  dir: "/absolute/path/to/cpa/plugins"
+  store-sources:
+    - "https://raw.githubusercontent.com/Cec1c/cpamp-theme-studio/main/registry.json"
 ```
 
-5. 启动 CPA 并打开 CPAMP 面板，右下角会出现主题工作室按钮。CPA 同时公开插件菜单资源：
+保存并重载配置后：
+
+1. 打开 CPAMP 的“插件”→“插件商店”。
+2. 确认来源中出现 `raw.githubusercontent.com`，搜索 `CPAMP Theme Studio`。
+3. 选择 Latest 或 `v0.1.0` 并安装；CPAMP/CPA 会校验 `checksums.txt`，把带版本号的动态库写到 `<dir>/<goos>/<goarch>/`，并创建启用配置。
+4. 若页面提示重启，重启实际运行的 CPA 服务；然后在“已安装插件”确认 `registered` 与 `effective enabled`。
+5. 打开“Theme Studio”插件页，或直接回到 CPAMP；右下角应出现主题工作室按钮。
+
+插件页面资源为：
 
 ```text
 /v0/resource/plugins/cpamp-theme-studio/studio
 ```
 
-生产部署、验证命令、升级、回滚和卸载请阅读[部署文档](docs/DEPLOYMENT.zh-CN.md)。
+若 CPA 访问 GitHub 必须走代理，请在启动该服务的环境中设置代理变量；`127.0.0.1:7890` 只有在代理与 CPA 位于同一网络命名空间时才有效。生产部署、市场安装验证、手工回退、升级、回滚和卸载请阅读[部署文档](docs/DEPLOYMENT.zh-CN.md)。
 
 ## CPAMP 轻量面板配置
 
@@ -114,9 +100,9 @@ remote-management:
 
 `panel_path` 为空时，插件会依次检查 `CPAMP_THEME_PANEL_PATH`、`MANAGEMENT_STATIC_PATH`、`PANEL_PATH`，以及 CPA 工作目录和可执行文件附近的 `static/management.html`、`management.html`。
 
-## 插件商店源
+## 插件商店契约
 
-仓库产生 GitHub Release 后，可把它加入 CPA 社区插件源：
+本仓库是 CPAMP 可添加的社区插件源：
 
 ```yaml
 plugins:
@@ -124,7 +110,7 @@ plugins:
     - "https://raw.githubusercontent.com/Cec1c/cpamp-theme-studio/main/registry.json"
 ```
 
-CPA 会寻找 `cpamp-theme-studio_<version>_<goos>_<goarch>.zip` 和 `checksums.txt`；仓库内的 Release 工作流会生成这些产物。
+CPA 会寻找 `cpamp-theme-studio_<version>_<goos>_<goarch>.zip` 和 `checksums.txt`，并把 ZIP 根目录中的动态库安装为 `cpamp-theme-studio-v<version>.<ext>`。仓库内的 Release 工作流会生成六个平台压缩包及聚合校验和。
 
 ## 从源码构建
 

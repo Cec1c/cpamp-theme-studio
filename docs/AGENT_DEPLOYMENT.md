@@ -12,7 +12,7 @@ Deploy Cec1c/cpamp-theme-studio into the existing CPA installation on this serve
 Rules:
 1. Work read-only first. Discover CPA_HOME, the effective config.yaml, plugins.dir, OS/architecture, CPA version, CPAMP panel version/source, process/service manager, and whether the panel is CPA lightweight, Manager Server external PANEL_PATH, or embedded-only.
 2. Do not display, copy, change, or commit Management Keys, API keys, auth files, or unrelated configuration.
-3. Use https://github.com/Cec1c/cpamp-theme-studio as the only plugin source. Require a published GitHub Release and install through CPAMP's plugin-store flow. If no release exists, stop; do not substitute a source build and call it a store deployment.
+3. Use https://github.com/Cec1c/cpamp-theme-studio as the only plugin source. Require a published GitHub Release and install through CPAMP's plugin-store flow. The registry uses pinned schema-v2 direct artifacts; do not replace them with GitHub API release discovery. If no release exists, stop; do not substitute a source build and call it a store deployment.
 4. Do not modify an embedded-only Manager Server panel. Stop and report that external PANEL_PATH is required.
 5. Before writes, back up only the effective CPA config, existing cpamp-theme-studio library, and external management.html. Preserve permissions and ownership.
 6. Merge only plugins.enabled, an absolute plugins.dir, and this repository's registry URL into plugins.store-sources. Do not pre-copy a library or invent a plugin config before testing store discovery.
@@ -20,7 +20,7 @@ Rules:
 8. After store installation, set absolute panel_path and host_config_path only when automatic discovery is ambiguous. Restart only when required by the effective runtime.
 9. Validate plugin loaded + registered logs, plugin listing, studio HTML, loader JavaScript, exactly one panel marker pair, and a real browser launch/persistence check when browser access exists.
 10. On any failed acceptance check, disable the plugin, wait for marker cleanup, restore backups, restart the previous version, and report the evidence.
-11. Report store discovery, install API result/path, release SHA-256, discovered paths and versions, backups, changed files, validation results, and anything not tested. Never print secrets.
+11. Report store discovery, install API result/path, registry/release SHA-256, discovered paths and versions, backups, changed files, validation results, and anything not tested. Never print secrets.
 ```
 
 ## Required inputs / 必要参数
@@ -54,7 +54,7 @@ If `PANEL_MODE=manager-embedded`, the deployment is not viable yet. The agent sh
 2. Check the listening address. Use loopback for acceptance testing.
 3. Resolve effective `plugins.dir` to an absolute path. If it is relative, resolve it against the live process working directory, not the shell's current directory.
 4. Determine the panel path from the live service/config and verify it is a regular, writable, non-symlink `.html` file under 64 MiB.
-5. Confirm the requested GitHub Release exists and contains the matching platform ZIP plus `checksums.txt`. If either is missing, stop.
+5. Confirm the requested GitHub Release exists and contains the matching platform ZIP plus `checksums.txt`; confirm the custom registry's matching artifact URL, size, and SHA-256 agree with those bytes. If any item is missing or disagrees, stop.
 6. Create timestamped backups beside an operator-approved backup directory. A backup is not successful until its size and SHA-256 are recorded.
 7. Minimally merge the store bootstrap configuration. Preserve unrelated plugin sources and configurations:
 
@@ -66,7 +66,7 @@ plugins:
     - "https://raw.githubusercontent.com/Cec1c/cpamp-theme-studio/main/registry.json"
 ```
 
-8. Reload the effective configuration, then verify the CPAMP Plugin Store lists `cpamp-theme-studio` from that source without a source error.
+8. Reload the effective configuration, then verify the CPAMP Plugin Store lists `cpamp-theme-studio` from that source as install type `direct`, with the current OS/architecture present and no error for this custom source. An unrelated official-source error must be reported but does not invalidate a healthy custom source.
 9. Install the requested version through CPAMP or `POST /v0/management/plugin-store/cpamp-theme-studio/install?source=<resolved-source-id>&version=<version>`. Use the deployment's existing authenticated management path without printing the key. Record the response `path` and confirm it is under the resolved `<plugins.dir>/<goos>/<goarch>/`.
 10. If panel discovery is ambiguous, update only this plugin's configuration through CPAMP with `auto_inject: true`, absolute `panel_path`, absolute `host_config_path`, and `watch_seconds: 3`. Restart the effective CPA service only if needed.
 11. Verify in order:

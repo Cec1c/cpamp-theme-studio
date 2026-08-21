@@ -48,7 +48,7 @@ The plugin runs inside CPA. It cannot rewrite a panel embedded inside a separate
 
 ## Recommended install: CPAMP Plugin Store
 
-The first release uses this repository as a community store source, so no CPAMP or CPA upstream PR is required. Merge these fields into the effective CPA `config.yaml`. Prefer an absolute `dir` so a different systemd working directory cannot redirect the installation:
+The project uses this repository as a community store source, so no CPAMP or CPA upstream PR is required. Merge these fields into the effective CPA `config.yaml`. Prefer an absolute `dir` so a different systemd working directory cannot redirect the installation:
 
 ```yaml
 plugins:
@@ -62,7 +62,7 @@ After saving and reloading the configuration:
 
 1. Open CPAMP, then Plugins → Plugin Store.
 2. Confirm that the sources include `raw.githubusercontent.com` and search for `CPAMP Theme Studio`.
-3. Choose Latest or `v0.1.0` and install it. CPAMP/CPA verifies `checksums.txt`, writes a versioned library under `<dir>/<goos>/<goarch>/`, and creates the enabled plugin configuration.
+3. Choose Latest or `0.1.0` and install it. CPAMP/CPA downloads the matching pinned Release archive, verifies the SHA-256 carried by the store registry, writes a versioned library under `<dir>/<goos>/<goarch>/`, and creates the enabled plugin configuration.
 4. Restart the effective CPA service if prompted, then confirm `registered` and `effective enabled` on Installed Plugins.
 5. Open the Theme Studio plugin page or return to CPAMP; the launcher should appear in the lower-right corner.
 
@@ -110,7 +110,7 @@ plugins:
     - "https://raw.githubusercontent.com/Cec1c/cpamp-theme-studio/main/registry.json"
 ```
 
-CPA expects `cpamp-theme-studio_<version>_<goos>_<goarch>.zip` plus `checksums.txt`, and installs the root-level library as `cpamp-theme-studio-v<version>.<ext>`. The release workflow generates six platform archives and an aggregate checksum file.
+`registry.json` uses CPA schema v2 direct artifacts: every OS/architecture URL, byte size, and SHA-256 is pinned to an immutable GitHub Release. This avoids anonymous GitHub REST API rate limits during marketplace installation. CPA installs the root-level library as `cpamp-theme-studio-v<version>.<ext>`. The release workflow generates six platform archives, `checksums.txt`, and a verified candidate registry from the actual packaged bytes.
 
 ## Build from source
 

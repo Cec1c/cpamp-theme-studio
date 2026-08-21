@@ -44,7 +44,7 @@ Use the proxy only when it exists on the machine performing the download.
 
 ## 3. Install through the CPAMP Plugin Store (recommended)
 
-CPAMP currently uses CPA's plugin-store APIs for discovery, download, verification, installation, and lifecycle control. The product feature is browser-side code, but a minimal CPA native bridge is still shipped so the extension can enter the CPAMP store and page container.
+CPAMP currently uses CPA's plugin-store APIs for discovery, download, verification, installation, and lifecycle control. The product feature is browser-side code, but a minimal CPA native bridge is still shipped so the extension can enter the CPAMP store and page container. This registry uses schema-v2 direct artifacts with a pinned URL, byte size, and SHA-256 for each platform, so installation does not consume anonymous GitHub REST API quota.
 
 Add the community source on CPAMP's Configuration page, or minimally merge these fields into the effective CPA `config.yaml`:
 
@@ -65,13 +65,13 @@ An absolute `plugins.dir` is strongly recommended. CPA v7.2.138 writes a store i
 Then use CPAMP:
 
 1. Open Plugins → Plugin Store and confirm the custom source has no error.
-2. Search for `CPAMP Theme Studio` and choose Latest or a specific GitHub Release.
+2. Search for `CPAMP Theme Studio` and choose Latest or a specific version such as `0.1.0`.
 3. Complete the third-party confirmation and install it.
 4. Record the returned version and actual `path`; never assume a relative directory is beside the CPA executable.
 5. Wait for hot reload or restart the effective CPA service when CPAMP requests it.
 6. Confirm `registered=true` and `effective_enabled=true` under Installed Plugins, then open Theme Studio.
 
-The store path passes only when discovery, installation, target path, registration, and the HTTP 200 resource check all succeed. If store installation fails, do not manually copy a library and report a successful store deployment. Capture the CPAMP response and CPA logs first; use the next section only as an explicitly reported manual fallback.
+The store path passes only when discovery, pinned SHA-256 verification, installation, target path, registration, and the HTTP 200 resource check all succeed. If store installation fails, do not manually copy a library and report a successful store deployment. Capture the CPAMP response and CPA logs first; use the next section only as an explicitly reported manual fallback.
 
 ## 4. Install manually from a release (fallback)
 

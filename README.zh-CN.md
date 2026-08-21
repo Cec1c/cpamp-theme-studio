@@ -48,7 +48,7 @@ CPAMP 主题工作室是一个通过 CPAMP 插件市场交付的前端主题扩�
 
 ## 推荐安装：CPAMP 插件市场
 
-首版先使用本仓库提供的社区商店源，不需要向 CPAMP 或 CPA 上游提交 PR。把以下字段合并到 CPA 的有效 `config.yaml`；`dir` 建议使用绝对路径，避免 systemd 工作目录不同导致插件装到了错误位置：
+项目使用本仓库提供的社区商店源，不需要向 CPAMP 或 CPA 上游提交 PR。把以下字段合并到 CPA 的有效 `config.yaml`；`dir` 建议使用绝对路径，避免 systemd 工作目录不同导致插件装到了错误位置：
 
 ```yaml
 plugins:
@@ -62,7 +62,7 @@ plugins:
 
 1. 打开 CPAMP 的“插件”→“插件商店”。
 2. 确认来源中出现 `raw.githubusercontent.com`，搜索 `CPAMP Theme Studio`。
-3. 选择 Latest 或 `v0.1.0` 并安装；CPAMP/CPA 会校验 `checksums.txt`，把带版本号的动态库写到 `<dir>/<goos>/<goarch>/`，并创建启用配置。
+3. 选择 Latest 或 `0.1.0` 并安装；CPAMP/CPA 会下载清单固定的平台 Release 压缩包，校验商店清单携带的 SHA-256，把带版本号的动态库写到 `<dir>/<goos>/<goarch>/`，并创建启用配置。
 4. 若页面提示重启，重启实际运行的 CPA 服务；然后在“已安装插件”确认 `registered` 与 `effective enabled`。
 5. 打开“Theme Studio”插件页，或直接回到 CPAMP；右下角应出现主题工作室按钮。
 
@@ -110,7 +110,7 @@ plugins:
     - "https://raw.githubusercontent.com/Cec1c/cpamp-theme-studio/main/registry.json"
 ```
 
-CPA 会寻找 `cpamp-theme-studio_<version>_<goos>_<goarch>.zip` 和 `checksums.txt`，并把 ZIP 根目录中的动态库安装为 `cpamp-theme-studio-v<version>.<ext>`。仓库内的 Release 工作流会生成六个平台压缩包及聚合校验和。
+`registry.json` 使用 CPA schema v2 直链资产：每个系统/架构的 URL、字节数和 SHA-256 都固定到不可变的 GitHub Release，因此市场安装不依赖 GitHub REST API 的匿名配额。CPA 会把 ZIP 根目录中的动态库安装为 `cpamp-theme-studio-v<version>.<ext>`。Release 工作流会从实际产物生成六个平台压缩包、`checksums.txt` 和已核验的候选商店清单。
 
 ## 从源码构建
 

@@ -36,6 +36,7 @@ jobs:
           go test -race ./...
           node --check assets/loader.js
           python -m json.tool registry.json >/dev/null
+          python scripts/generate_registry_test.py
 
   native-build:
     strategy:

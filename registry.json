@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "plugins": [
     {
       "id": "cpamp-theme-studio",
@@ -14,7 +14,54 @@
         "Management",
         "Theme",
         "Frontend"
-      ]
+      ],
+      "install": {
+        "type": "direct",
+        "artifacts": [
+          {
+            "goos": "windows",
+            "goarch": "amd64",
+            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.1.0/cpamp-theme-studio_0.1.0_windows_amd64.zip",
+            "sha256": "4adff3a4f1eed5a40fcbc1f7931c0c149ad47b7b1172d3f3edbf2258a75ddf07",
+            "size": 2107334
+          },
+          {
+            "goos": "windows",
+            "goarch": "arm64",
+            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.1.0/cpamp-theme-studio_0.1.0_windows_arm64.zip",
+            "sha256": "6c4becceeb5ef52d656944fc810660bc7e47f4379917f5cf43d4a54fe4e8cde6",
+            "size": 2069912
+          },
+          {
+            "goos": "linux",
+            "goarch": "amd64",
+            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.1.0/cpamp-theme-studio_0.1.0_linux_amd64.zip",
+            "sha256": "f154d85c3d5be6ef7cf6a93496a53dd59251ea41169074cc3f84f2b8bffe91ea",
+            "size": 2121643
+          },
+          {
+            "goos": "linux",
+            "goarch": "arm64",
+            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.1.0/cpamp-theme-studio_0.1.0_linux_arm64.zip",
+            "sha256": "f3e84e7bccb8fd8dbc0d0828bb96776ebbe7b430ae7e29161822f92a7f33a751",
+            "size": 1932197
+          },
+          {
+            "goos": "darwin",
+            "goarch": "amd64",
+            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.1.0/cpamp-theme-studio_0.1.0_darwin_amd64.zip",
+            "sha256": "2b263464de8cb1b0c5724776626966cca5966870732a9db51f8294689f266e34",
+            "size": 2020311
+          },
+          {
+            "goos": "darwin",
+            "goarch": "arm64",
+            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.1.0/cpamp-theme-studio_0.1.0_darwin_arm64.zip",
+            "sha256": "fbe123f7ce94769a6d874d3a9852db6ddcd5c5a8947e943d8097915f887079aa",
+            "size": 1868180
+          }
+        ]
+      }
     }
   ]
 }

@@ -51,8 +51,6 @@ jobs:
           set -euo pipefail
           version="${GITHUB_REF_NAME#v}"
           [[ "${version}" =~ ^[0-9][0-9A-Za-z.+-]*$ ]]
-          registry_version="$(python -c 'import json; print(json.load(open("registry.json", encoding="utf-8"))["plugins"][0]["version"])')"
-          test "${registry_version}" = "${version}"
       - name: Package Windows plugin
         if: runner.os == 'Windows'
         shell: pwsh
@@ -93,6 +91,15 @@ jobs:
             cd dist
             sha256sum cpamp-theme-studio_*.zip | sort -k2
           ) >dist/checksums.txt
+      - name: Generate pinned plugin-store registry
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/generate_registry.py \
+            --version "${GITHUB_REF_NAME#v}" \
+            --assets-dir dist \
+            --output dist/registry.json
+          python -m json.tool dist/registry.json >/dev/null
       - name: Detect prerelease
         id: release_type
         shell: bash
@@ -110,4 +117,4 @@ jobs:
           files: |
             dist/cpamp-theme-studio_*.zip
             dist/checksums.txt
-            registry.json
+            dist/registry.json

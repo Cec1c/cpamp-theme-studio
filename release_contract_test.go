@@ -79,12 +79,12 @@ func TestRegistryMatchesCPAStoreV2DirectContract(t *testing.T) {
 		SHA256 string
 		Size   int64
 	}{
-		"windows/amd64": {"4adff3a4f1eed5a40fcbc1f7931c0c149ad47b7b1172d3f3edbf2258a75ddf07", 2107334},
-		"windows/arm64": {"6c4becceeb5ef52d656944fc810660bc7e47f4379917f5cf43d4a54fe4e8cde6", 2069912},
-		"linux/amd64":   {"f154d85c3d5be6ef7cf6a93496a53dd59251ea41169074cc3f84f2b8bffe91ea", 2121643},
-		"linux/arm64":   {"f3e84e7bccb8fd8dbc0d0828bb96776ebbe7b430ae7e29161822f92a7f33a751", 1932197},
-		"darwin/amd64":  {"2b263464de8cb1b0c5724776626966cca5966870732a9db51f8294689f266e34", 2020311},
-		"darwin/arm64":  {"fbe123f7ce94769a6d874d3a9852db6ddcd5c5a8947e943d8097915f887079aa", 1868180},
+		"windows/amd64": {"edeb34edd62d48dea727106c02795124f6bed91be82574b165635f7805d87fe0", 2299090},
+		"windows/arm64": {"002f5742abb6f1806ca97cefcf8108ecf8ccc63ba4551cb8b1ca78766198f362", 2265601},
+		"linux/amd64":   {"906de1ed47b5d32e1de982c1eee057de65aefb9cffdbda897f3b34d9e5dcbd1b", 2317116},
+		"linux/arm64":   {"f95d10bc2d16138f0c3208c5f53eca322cf26ce4993e267e3a5dc3c4294c6a5b", 2127623},
+		"darwin/amd64":  {"d859bda610c8c38fb1070f86faf6f2792015b7a0f67df4602abb620471b3c3e1", 2213144},
+		"darwin/arm64":  {"281860d48e1ee83dde31ae6527342098179dac6f5b568b1ecabb79165608520f", 2064551},
 	}
 	if len(plugin.Install.Artifacts) != len(expected) {
 		t.Fatalf("artifacts = %d, want %d", len(plugin.Install.Artifacts), len(expected))

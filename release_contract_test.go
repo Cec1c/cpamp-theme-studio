@@ -139,3 +139,37 @@ func TestReleaseWorkflowPublishesCPAStoreAssets(t *testing.T) {
 		t.Error("release workflow does not generate the pinned registry from packaged assets")
 	}
 }
+
+func TestReleasePackagesIncludeJetBrainsMonoLicense(t *testing.T) {
+	for _, testCase := range []struct {
+		path     string
+		required []string
+	}{
+		{
+			path: "scripts/package.ps1",
+			required: []string{
+				"assets\\fonts\\OFL.txt",
+				"JETBRAINS_MONO_OFL.txt",
+			},
+		},
+		{
+			path: "scripts/package.sh",
+			required: []string{
+				"assets/fonts/OFL.txt",
+				"JETBRAINS_MONO_OFL.txt",
+			},
+		},
+	} {
+		t.Run(testCase.path, func(t *testing.T) {
+			raw, errRead := os.ReadFile(testCase.path)
+			if errRead != nil {
+				t.Fatal(errRead)
+			}
+			for _, required := range testCase.required {
+				if !strings.Contains(string(raw), required) {
+					t.Fatalf("%s is missing %q", testCase.path, required)
+				}
+			}
+		})
+	}
+}

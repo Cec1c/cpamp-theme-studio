@@ -65,11 +65,11 @@ An absolute `plugins.dir` is strongly recommended. CPA v7.2.138 writes a store i
 Then use CPAMP:
 
 1. Open Plugins → Plugin Store and confirm the custom source has no error.
-2. Search for `CPAMP Theme Studio` and choose Latest or a specific version such as `0.1.0`.
+2. Search for `CPAMP Theme Studio` and choose Latest or a specific version such as `0.1.1`.
 3. Complete the third-party confirmation and install it.
 4. Record the returned version and actual `path`; never assume a relative directory is beside the CPA executable.
 5. Wait for hot reload or restart the effective CPA service when CPAMP requests it.
-6. Confirm `registered=true` and `effective_enabled=true` under Installed Plugins, then open Theme Studio.
+6. Confirm `registered=true` and `effective_enabled=true` under Installed Plugins, then return to the dashboard and use the lower-right launcher. No Theme Studio sidebar item is expected.
 
 The store path passes only when discovery, pinned SHA-256 verification, installation, target path, registration, and the HTTP 200 resource check all succeed. If store installation fails, do not manually copy a library and report a successful store deployment. Capture the CPAMP response and CPA logs first; use the next section only as an explicitly reported manual fallback.
 
@@ -106,7 +106,7 @@ Stop CPA, then copy the library into the matching platform directory:
 <CPA_HOME>/plugins/<goos>/<goarch>/cpamp-theme-studio.<dll|so|dylib>
 ```
 
-Versioned names such as `cpamp-theme-studio-v0.1.0.dll` are also accepted by CPA. Do not keep multiple unversioned copies.
+Versioned names such as `cpamp-theme-studio-v0.1.1.dll` are also accepted by CPA. Do not keep multiple unversioned copies.
 
 ## 5. Build from source
 
@@ -117,7 +117,7 @@ git clone https://github.com/Cec1c/cpamp-theme-studio.git
 cd cpamp-theme-studio
 go test ./...
 node --check assets/loader.js
-./scripts/package.sh 0.1.0-dev
+./scripts/package.sh 0.1.1-dev
 ```
 
 Windows:
@@ -127,7 +127,7 @@ git clone https://github.com/Cec1c/cpamp-theme-studio.git
 Set-Location .\cpamp-theme-studio
 go test ./...
 node --check .\assets\loader.js
-.\scripts\package.ps1 -Version 0.1.0-dev
+.\scripts\package.ps1 -Version 0.1.1-dev
 ```
 
 The build requires Go 1.26+ and a native C compiler. Build on the same OS/architecture as the target because the plugin uses CGO `c-shared` mode.
@@ -189,13 +189,18 @@ Check the public, read-only plugin page:
 ```bash
 curl -fsS http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio >/dev/null
 curl -fsS 'http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio?asset=loader' >/dev/null
+curl -fsS 'http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio?asset=font-regular' >/dev/null
+curl -fsS 'http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio?asset=font-semibold' >/dev/null
 ```
 
 Then open `management.html` in a browser and verify:
 
 - A Theme Studio launcher appears in the lower-right corner.
-- The editor opens and closes with keyboard focus preserved.
+- No `Theme Studio` item appears in the left sidebar; the floating launcher is the single entry point.
+- The editor opens, changes a theme, and closes repeatedly through X, the scrim, and Escape with keyboard focus preserved.
 - A palette change survives a reload.
+- Browser-computed typography starts with `JetBrains Mono`; both bundled font weights load successfully.
+- Each cycle leaves exactly one mount, launcher, and stage, and restores `body` overflow after closing.
 - Browser developer tools show no Theme Studio errors.
 - The file contains exactly one start marker and one end marker.
 
@@ -214,6 +219,8 @@ Do not use the marker alone as the health check; registration, resource response
 4. Replace the plugin library with the new version and re-enable its configuration.
 5. Start CPA and repeat all verification checks.
 6. Confirm the current CPAMP panel still has exactly one marker block.
+
+When upgrading from `0.1.0` to `0.1.1`, refresh the panel once after CPA starts. The old plugin-page/sidebar entry should disappear, browser preferences are retained, and the lower-right launcher becomes the only entry point.
 
 Panel updates do not require reinstalling the plugin. If CPAMP replaces `management.html`, the watcher should restore the loader within `watch_seconds`.
 

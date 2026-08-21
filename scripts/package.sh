@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-version="${1:-0.1.0-dev}"
+version="${1:-0.1.1-dev}"
 target="${2:-$(go env GOHOSTOS)-$(go env GOHOSTARCH)}"
 version="${version#v}"
 
@@ -38,11 +38,12 @@ trap 'rm -rf -- "${stage_dir}"' EXIT
 
 "${repo_root}/scripts/build.sh" "${version}" "${target}" "${stage_dir}"
 cp "${repo_root}/LICENSE" "${repo_root}/README.md" "${repo_root}/README.zh-CN.md" "${repo_root}/THIRD_PARTY_NOTICES.md" "${stage_dir}/"
+cp "${repo_root}/assets/fonts/OFL.txt" "${stage_dir}/JETBRAINS_MONO_OFL.txt"
 cp -R "${repo_root}/docs" "${stage_dir}/docs"
 rm -f -- "${archive_path}"
 (
   cd "${stage_dir}"
-  zip -X -q -r "${archive_path}" "cpamp-theme-studio${extension}" LICENSE README.md README.zh-CN.md THIRD_PARTY_NOTICES.md docs
+  zip -X -q -r "${archive_path}" "cpamp-theme-studio${extension}" LICENSE README.md README.zh-CN.md THIRD_PARTY_NOTICES.md JETBRAINS_MONO_OFL.txt docs
 )
 if command -v sha256sum >/dev/null 2>&1; then
   checksum="$(sha256sum "${archive_path}" | awk '{print $1}')"

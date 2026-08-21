@@ -18,7 +18,7 @@ Rules:
 6. Merge only plugins.enabled, an absolute plugins.dir, and this repository's registry URL into plugins.store-sources. Do not pre-copy a library or invent a plugin config before testing store discovery.
 7. Use CPAMP's Plugin Store UI or the authenticated CPA plugin-store API to discover and install cpamp-theme-studio. Record the returned version and absolute install path. A file copied by hand is not a successful marketplace deployment.
 8. After store installation, set absolute panel_path and host_config_path only when automatic discovery is ambiguous. Restart only when required by the effective runtime.
-9. Validate plugin loaded + registered logs, plugin listing, studio HTML, loader JavaScript, exactly one panel marker pair, and a real browser launch/persistence check when browser access exists.
+9. Validate plugin loaded + registered logs, plugin listing with zero published menus, studio HTML, loader JavaScript, both JetBrains Mono resources, exactly one panel marker pair, and repeated real-browser open/change/close plus reload persistence when browser access exists.
 10. On any failed acceptance check, disable the plugin, wait for marker cleanup, restore backups, restart the previous version, and report the evidence.
 11. Report store discovery, install API result/path, registry/release SHA-256, discovered paths and versions, backups, changed files, validation results, and anything not tested. Never print secrets.
 ```
@@ -77,11 +77,14 @@ plugins:
 [ ] CPA process is healthy and bound only where expected
 [ ] log contains plugin loaded and plugin registered for cpamp-theme-studio
 [ ] authenticated CPA plugin listing says registered=true and effective_enabled=true
+[ ] authenticated plugin listing reports menus=[] for cpamp-theme-studio
 [ ] GET /v0/resource/plugins/cpamp-theme-studio/studio returns 200 HTML
 [ ] GET .../studio?asset=loader returns 200 JavaScript with nosniff and cache headers
+[ ] GET .../studio?asset=font-regular and font-semibold return 200 font/woff2
 [ ] management.html has exactly one start marker and one end marker
-[ ] CPAMP still reaches its login/dashboard and the launcher opens
-[ ] one setting change persists after browser reload
+[ ] CPAMP still reaches its login/dashboard, has no Theme Studio sidebar item, and shows one lower-right launcher
+[ ] launcher -> change theme -> X/scrim/Escape -> reopen succeeds repeatedly without duplicate mounts or stuck body overflow
+[ ] JetBrains Mono is loaded in the browser and one setting change persists after browser reload
 ```
 
 12. Simulate an upstream update only in a disposable copy or approved maintenance window: replace the panel with the same official version and confirm reinjection within `watch_seconds`.

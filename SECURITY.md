@@ -11,7 +11,7 @@ Please use GitHub's private vulnerability-reporting feature for this repository.
 ## Security boundaries
 
 - The plugin never requests, reads, stores, or forwards a CPA Management Key.
-- Its unauthenticated browser resource exposes only the embedded Theme Studio landing page and loader JavaScript.
+- Its unauthenticated browser resource exposes only the embedded Theme Studio landing page, loader JavaScript, and the bundled JetBrains Mono WOFF2 files.
 - Automatic injection accepts only regular `.html` files up to 64 MiB and rejects symbolic links.
 - Panel changes are delimited by unique markers and replaced atomically.
 - `panel_path` and `host_config_path` must be trusted local paths controlled by the operator.

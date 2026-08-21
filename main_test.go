@@ -169,6 +169,36 @@ func TestManagementLoaderResponse(t *testing.T) {
 	}
 }
 
+func TestManagementServesBundledJetBrainsMono(t *testing.T) {
+	for _, asset := range []string{"font-regular", "font-semibold"} {
+		t.Run(asset, func(t *testing.T) {
+			request := managementRequest{Method: "GET", Query: map[string][]string{"asset": {asset}}}
+			rawRequest, _ := json.Marshal(request)
+			raw, errHandle := handleManagement(rawRequest)
+			if errHandle != nil {
+				t.Fatal(errHandle)
+			}
+			var env envelope
+			if errUnmarshal := json.Unmarshal(raw, &env); errUnmarshal != nil {
+				t.Fatal(errUnmarshal)
+			}
+			var response managementResponse
+			if errUnmarshal := json.Unmarshal(env.Result, &response); errUnmarshal != nil {
+				t.Fatal(errUnmarshal)
+			}
+			if response.StatusCode != 200 || response.Headers.Get("Content-Type") != "font/woff2" {
+				t.Fatalf("response = %#v", response)
+			}
+			if len(response.Body) < 80_000 || !strings.HasPrefix(string(response.Body), "wOF2") {
+				t.Fatalf("%s is not the expected bundled WOFF2 font (%d bytes)", asset, len(response.Body))
+			}
+			if response.Headers.Get("ETag") == "" || !strings.Contains(response.Headers.Get("Cache-Control"), "immutable") {
+				t.Fatalf("font cache headers = %#v", response.Headers)
+			}
+		})
+	}
+}
+
 func TestManagementResourceRejectsMutationAndUnknownAsset(t *testing.T) {
 	for _, testCase := range []struct {
 		name    string
@@ -209,13 +239,24 @@ func TestPluginRegistrationUsesStandaloneRepository(t *testing.T) {
 	}
 }
 
-func TestRegistrationOnlyPublishesStudioMenu(t *testing.T) {
+func TestRegistrationKeepsStudioResourceOutOfSidebar(t *testing.T) {
 	raw, errHandle := handleMethod(methodManagementRegister, nil)
 	if errHandle != nil {
 		t.Fatal(errHandle)
 	}
-	if strings.Count(string(raw), `"Path"`) != 1 || !strings.Contains(string(raw), `"/studio"`) {
-		t.Fatalf("registration = %s", raw)
+	var env envelope
+	if errUnmarshal := json.Unmarshal(raw, &env); errUnmarshal != nil {
+		t.Fatal(errUnmarshal)
+	}
+	var registration managementRegistration
+	if errUnmarshal := json.Unmarshal(env.Result, &registration); errUnmarshal != nil {
+		t.Fatal(errUnmarshal)
+	}
+	if len(registration.Resources) != 1 || registration.Resources[0].Path != "/studio" {
+		t.Fatalf("registration = %#v", registration)
+	}
+	if registration.Resources[0].Menu != "" {
+		t.Fatalf("studio resource must stay hidden from the CPAMP sidebar: %#v", registration.Resources[0])
 	}
 }
 
@@ -230,6 +271,10 @@ func TestLoaderRuntimeContract(t *testing.T) {
 		"en:",
 		"ru:",
 		"prefers-reduced-motion",
+		"JetBrains Mono",
+		"event.composedPath",
+		"MutationObserver",
+		"getDebugState",
 	} {
 		if !strings.Contains(loader, required) {
 			t.Fatalf("loader is missing runtime contract %q", required)
@@ -237,5 +282,8 @@ func TestLoaderRuntimeContract(t *testing.T) {
 	}
 	if strings.Contains(loader, "var hostConnected = hostWindow !== window || !window.parent") {
 		t.Fatal("standalone plugin resources must not be reported as an injected host panel")
+	}
+	if strings.Contains(loader, "button('font'") || strings.Contains(loader, "if (opened) return") {
+		t.Fatal("loader must not expose legacy font choices or rely on stale open-state guards")
 	}
 }

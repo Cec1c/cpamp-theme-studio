@@ -1,10 +1,10 @@
 # CPAMP 主题工作室
 
-[English](README.md) · [部署文档](docs/DEPLOYMENT.zh-CN.md) · [Agent 部署手册](docs/AGENT_DEPLOYMENT.md)
+[English](README.md) · [部署文档](docs/DEPLOYMENT.zh-CN.md) · [Agent 部署手册](docs/AGENT_DEPLOYMENT.md) · [v0.1.1 发布说明](docs/RELEASE_NOTES_v0.1.1.md)
 
 CPAMP 主题工作室是一个通过 CPAMP 插件市场交付的前端主题扩展，为可写的 [CPA Manager Plus](https://github.com/seakee/CPA-Manager-Plus) 面板增加可持久化的视觉主题编辑器。功能不再依赖 CPAMP 上游 PR，也不需要长期维护 CPAMP fork。
 
-主题、编辑器和持久化逻辑都在浏览器端的 `assets/loader.js` 中。由于当前 CPAMP 的插件市场、启停和页面容器复用 CPA 插件 API，发行包仍包含一个最小原生桥：它只负责向 CPAMP 注册页面资源，并在 `management.html` 中维护一段带唯一标记的 `<script>`；不参与模型请求、Provider 或流量路由。上游面板更新覆盖文件后会自动恢复注入，停用插件时只移除自己的标记块。
+主题、编辑器和持久化逻辑都在浏览器端的 `assets/loader.js` 中。由于当前 CPAMP 的插件市场和启停复用 CPA 插件 API，发行包仍包含一个最小原生桥：它只注册隐藏的浏览器资源路由，并在 `management.html` 中维护一段带唯一标记的 `<script>`；不参与模型请求、Provider 或流量路由。上游面板更新覆盖文件后会自动恢复注入，停用插件时只移除自己的标记块。
 
 ## 兼容状态
 
@@ -27,13 +27,14 @@ CPAMP 主题工作室是一个通过 CPAMP 插件市场交付的前端主题扩�
 - 自动、浅色、深色三种显示模式。
 - CPAMP 蓝及九套独立设计的配色。
 - 自定义强调色。
-- 六档圆角、三档界面密度、三种字体。
+- 六档圆角、三档界面密度，以及内置 JetBrains Mono 与中文回退字体。
 - 铺满或居中的桌面内容布局。
 - 完整视觉效果或性能优先模式。
 - 即时预览、本地持久化、旧偏好迁移、一键重置。
 - 简体中文、繁体中文、英语、俄语。
 - Shadow DOM 隔离、键盘焦点处理、减少动画支持和移动端布局。
-- CPAMP 更新覆盖面板后的幂等重注入。
+- 只保留右下角一个启动入口，不再生成重复的插件页/侧栏菜单。
+- SPA 重入和 CPAMP 更新覆盖面板后的幂等运行时恢复与重注入。
 - 热停用时确定性清理；进程正常关闭时仅尽力清理。
 
 ## 部署模式
@@ -62,11 +63,11 @@ plugins:
 
 1. 打开 CPAMP 的“插件”→“插件商店”。
 2. 确认来源中出现 `raw.githubusercontent.com`，搜索 `CPAMP Theme Studio`。
-3. 选择 Latest 或 `0.1.0` 并安装；CPAMP/CPA 会下载清单固定的平台 Release 压缩包，校验商店清单携带的 SHA-256，把带版本号的动态库写到 `<dir>/<goos>/<goarch>/`，并创建启用配置。
+3. 选择 Latest 或 `0.1.1` 并安装；CPAMP/CPA 会下载清单固定的平台 Release 压缩包，校验商店清单携带的 SHA-256，把带版本号的动态库写到 `<dir>/<goos>/<goarch>/`，并创建启用配置。
 4. 若页面提示重启，重启实际运行的 CPA 服务；然后在“已安装插件”确认 `registered` 与 `effective enabled`。
-5. 打开“Theme Studio”插件页，或直接回到 CPAMP；右下角应出现主题工作室按钮。
+5. 回到 CPAMP 仪表盘；主题工作室唯一入口应是右下角按钮。
 
-插件页面资源为：
+注入 loader 和内置字体使用的隐藏只读资源为：
 
 ```text
 /v0/resource/plugins/cpamp-theme-studio/studio
@@ -119,15 +120,15 @@ plugins:
 Windows PowerShell：
 
 ```powershell
-.\scripts\build.ps1 -Version 0.1.0-dev
-.\scripts\package.ps1 -Version 0.1.0-dev
+.\scripts\build.ps1 -Version 0.1.1-dev
+.\scripts\package.ps1 -Version 0.1.1-dev
 ```
 
 Linux 或 macOS：
 
 ```bash
-./scripts/build.sh 0.1.0-dev
-./scripts/package.sh 0.1.0-dev
+./scripts/build.sh 0.1.1-dev
+./scripts/package.sh 0.1.1-dev
 ```
 
 动态库和压缩包输出到 `dist/`，不会提交进 Git。
@@ -135,7 +136,7 @@ Linux 或 macOS：
 ## 工作原理
 
 1. CPA 通过插件 ABI v1 加载动态库。
-2. 插件注册一个只读管理资源，并返回内嵌的主题 loader JavaScript。
+2. 插件注册一个供 loader 和字体使用的隐藏只读资源路由，不发布 CPAMP 侧栏菜单。
 3. 注入器寻找可信的可写 `management.html`，在 `</head>` 前加入唯一 start/end 标记块。
 4. loader 用 Shadow DOM 挂载编辑器，通过 CPAMP CSS 变量和兼容的本地主题存储应用设置。
 5. 上游更新覆盖文件后自动恢复标记；热停用会确定性移除标记。进程关闭时，CPA 可能在原生插件的异步 shutdown 完成前退出，因此清理仅为 best effort。
@@ -149,12 +150,15 @@ Linux 或 macOS：
 - `go test ./...`、`go test -race ./...` 和 `go vet ./...`
 - `node --check assets/loader.js`
 - Windows/amd64 DLL、Linux/amd64 `.so` 原生构建与打包
-- Windows/amd64 和 Linux/amd64 上的 CPA v7.2.138 真实插件发现、注册、菜单和资源响应
+- Windows/amd64 和 Linux/amd64 上的 CPA v7.2.138 真实插件发现、注册、隐藏菜单契约和资源响应
 - CPAMP v1.12.2 官方面板校验与注入
-- 浏览器启动器、对话框内容、配色切换、刷新持久化、390×844 响应式布局
+- 连续 5 轮打开、换主题、X/遮罩/Escape 关闭；刷新并重新登录后再做 3 轮
+- mount、启动器、stage 始终各 1 个，关闭后 body 滚动恢复，SPA 路由重入正常，侧栏入口为 0
+- JetBrains Mono Regular/SemiBold 资源响应及浏览器实际字体加载
+- 配色刷新持久化和 390×844 响应式布局
 - 面板被官方文件覆盖后的自动重注入
 - 热停用后精确恢复原始 CPAMP SHA-256
 
 ## 许可与来源
 
-本项目采用 MIT License。CPA ABI、CPAMP 原型、YAML 依赖与配色来源说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。插件不分发 CPAMP `management.html`，也不包含 AGPL `new-api` 的代码或资源。
+本项目采用 MIT License。CPA ABI、CPAMP 原型、YAML 依赖、内置 JetBrains Mono 许可与配色来源说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。插件不分发 CPAMP `management.html`，也不包含 AGPL `new-api` 的代码或资源。

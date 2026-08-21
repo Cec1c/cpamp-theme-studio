@@ -13,8 +13,10 @@
   var runtimeVersion = scriptURL.searchParams.get('v') || 'dev';
   var hostWindow = resolveHostWindow();
 
-  if (hostWindow.__CPAMP_THEME_STUDIO__) {
-    if (openOnLoad) hostWindow.__CPAMP_THEME_STUDIO__.open();
+  var existingRuntime = findRuntime(hostWindow);
+  if (existingRuntime) {
+    if (typeof existingRuntime.ensure === 'function') existingRuntime.ensure();
+    if (openOnLoad && typeof existingRuntime.open === 'function') existingRuntime.open();
     return;
   }
 
@@ -31,6 +33,31 @@
     return window;
   }
 
+  function findRuntime(win) {
+    try {
+      var doc = win.document;
+      var mount = doc.getElementById('cpamp-theme-studio-root');
+      return win.__CPAMP_THEME_STUDIO__ ||
+        (doc.documentElement && doc.documentElement.__CPAMP_THEME_STUDIO__) ||
+        (mount && mount.__CPAMP_THEME_STUDIO__) || null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function resourceAssetURL(asset) {
+    try {
+      var resourceURL = new URL(scriptURL.href);
+      resourceURL.search = '';
+      resourceURL.hash = '';
+      resourceURL.searchParams.set('asset', asset);
+      resourceURL.searchParams.set('v', runtimeVersion);
+      return resourceURL.href;
+    } catch (_) {
+      return '/v0/resource/plugins/cpamp-theme-studio/studio?asset=' + encodeURIComponent(asset) + '&v=' + encodeURIComponent(runtimeVersion);
+    }
+  }
+
   function install(win, shouldOpen) {
     var doc = win.document;
     var root = doc.documentElement;
@@ -41,18 +68,22 @@
     var effectsStoreKey = 'cli-proxy-visual-effects';
     var styleID = 'cpamp-theme-studio-theme';
     var mountID = 'cpamp-theme-studio-root';
+    var mount = null;
     var shadow = null;
-    var mounted = false;
-    var opened = false;
+    var observer = null;
+    var remountScheduled = false;
+    var openRequested = Boolean(shouldOpen);
     var previousOverflow = '';
+    var overflowOwner = null;
     var returnFocus = null;
+    var fontRegularURL = resourceAssetURL('font-regular');
+    var fontSemiBoldURL = resourceAssetURL('font-semibold');
 
     var defaults = {
       mode: 'auto',
       preset: 'cpamp',
       radius: 'default',
       density: 'default',
-      font: 'system',
       contentLayout: 'full',
       customAccent: '#3b82f6',
       effects: 'full'
@@ -91,7 +122,7 @@
         open: '打开主题工作室', title: '主题工作室', subtitle: '为当前 CPAMP 调整视觉语言', close: '关闭', reset: '恢复默认',
         mode: '显示模式', auto: '跟随系统', light: '浅色', dark: '深色', palette: '配色', custom: '自定义强调色',
         radius: '圆角', square: '直角', small: '小', medium: '中', large: '大', xlarge: '超大', normal: '默认',
-        density: '界面密度', compact: '紧凑', comfortable: '舒适', font: '字体', system: '系统', modern: '现代', serif: '衬线',
+        density: '界面密度', compact: '紧凑', comfortable: '舒适',
         layout: '内容宽度', full: '铺满', centered: '居中', effects: '视觉效果', rich: '完整效果', efficient: '性能优先',
         scopeHost: '已连接宿主面板', scopeFrame: '当前为独立预览；请配置可写面板以全局生效',
         pCpamp: 'CPAMP 蓝', pEmber: '余烬暮色', pJade: '翡翠电路', pCoral: '珊瑚薄雾', pGlacier: '冰川信号',
@@ -101,7 +132,7 @@
         open: '開啟主題工作室', title: '主題工作室', subtitle: '調整目前 CPAMP 的視覺語言', close: '關閉', reset: '恢復預設',
         mode: '顯示模式', auto: '跟隨系統', light: '淺色', dark: '深色', palette: '配色', custom: '自訂強調色',
         radius: '圓角', square: '直角', small: '小', medium: '中', large: '大', xlarge: '超大', normal: '預設',
-        density: '介面密度', compact: '緊湊', comfortable: '舒適', font: '字體', system: '系統', modern: '現代', serif: '襯線',
+        density: '介面密度', compact: '緊湊', comfortable: '舒適',
         layout: '內容寬度', full: '鋪滿', centered: '置中', effects: '視覺效果', rich: '完整效果', efficient: '效能優先',
         scopeHost: '已連接宿主面板', scopeFrame: '目前為獨立預覽；請設定可寫面板以全域生效',
         pCpamp: 'CPAMP 藍', pEmber: '餘燼暮色', pJade: '翡翠電路', pCoral: '珊瑚薄霧', pGlacier: '冰川訊號',
@@ -111,7 +142,7 @@
         open: 'Open Theme Studio', title: 'Theme Studio', subtitle: 'Tune the visual language of this CPAMP', close: 'Close', reset: 'Restore defaults',
         mode: 'Display mode', auto: 'System', light: 'Light', dark: 'Dark', palette: 'Palette', custom: 'Custom accent',
         radius: 'Corner radius', square: 'Square', small: 'Small', medium: 'Medium', large: 'Large', xlarge: 'Extra large', normal: 'Default',
-        density: 'Density', compact: 'Compact', comfortable: 'Comfortable', font: 'Typography', system: 'System', modern: 'Modern', serif: 'Serif',
+        density: 'Density', compact: 'Compact', comfortable: 'Comfortable',
         layout: 'Content width', full: 'Full width', centered: 'Centered', effects: 'Visual effects', rich: 'Full effects', efficient: 'Performance',
         scopeHost: 'Connected to the host panel', scopeFrame: 'Standalone preview; configure a writable panel for global startup',
         pCpamp: 'CPAMP Blue', pEmber: 'Ember Dusk', pJade: 'Jade Circuit', pCoral: 'Coral Mist', pGlacier: 'Glacier Signal',
@@ -121,7 +152,7 @@
         open: 'Открыть студию тем', title: 'Студия тем', subtitle: 'Настройте визуальный язык CPAMP', close: 'Закрыть', reset: 'Сбросить',
         mode: 'Режим', auto: 'Системный', light: 'Светлый', dark: 'Тёмный', palette: 'Палитра', custom: 'Свой акцент',
         radius: 'Скругление', square: 'Без скругления', small: 'Малое', medium: 'Среднее', large: 'Большое', xlarge: 'Очень большое', normal: 'По умолчанию',
-        density: 'Плотность', compact: 'Компактная', comfortable: 'Просторная', font: 'Шрифт', system: 'Системный', modern: 'Современный', serif: 'С засечками',
+        density: 'Плотность', compact: 'Компактная', comfortable: 'Просторная',
         layout: 'Ширина', full: 'На всю ширину', centered: 'По центру', effects: 'Эффекты', rich: 'Полные', efficient: 'Производительность',
         scopeHost: 'Подключено к панели', scopeFrame: 'Автономный просмотр; для запуска везде настройте доступный файл панели',
         pCpamp: 'CPAMP Blue', pEmber: 'Ember Dusk', pJade: 'Jade Circuit', pCoral: 'Coral Mist', pGlacier: 'Glacier Signal',
@@ -200,7 +231,6 @@
         preset: allowed(source.preset, presetOrder.concat(['custom']), defaults.preset),
         radius: allowed(source.radius, ['default', 'none', 'sm', 'md', 'lg', 'xl'], defaults.radius),
         density: allowed(source.density, ['compact', 'default', 'comfortable'], defaults.density),
-        font: allowed(source.font, ['system', 'modern', 'serif'], defaults.font),
         contentLayout: allowed(source.contentLayout, ['full', 'centered'], defaults.contentLayout),
         customAccent: normalizeHex(source.customAccent, defaults.customAccent),
         effects: allowed(source.effects || hostEffectsState.mode, ['full', 'reduced'], defaults.effects)
@@ -274,15 +304,19 @@
       root.setAttribute('data-cts-preset', state.preset);
       root.setAttribute('data-cts-radius', state.radius);
       root.setAttribute('data-cts-density', state.density);
-      root.setAttribute('data-cts-font', state.font);
+      root.setAttribute('data-cts-font', 'jetbrains-mono');
       root.setAttribute('data-cts-layout', state.contentLayout);
       root.setAttribute('data-cpamp-theme-studio', 'active');
       applyPalette();
       saveState();
-      if (mounted) refreshControls();
+      if (isMounted()) refreshControls();
     }
 
     var themeCSS = String.raw`
+@font-face{font-family:'JetBrains Mono';src:url('${fontRegularURL}') format('woff2');font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:'JetBrains Mono';src:url('${fontSemiBoldURL}') format('woff2');font-style:normal;font-weight:600;font-display:swap}
+:root[data-cts-font='jetbrains-mono']{--app-font-family:'JetBrains Mono','PingFang SC','Microsoft YaHei',monospace;font-family:var(--app-font-family)}
+:root[data-cts-font='jetbrains-mono'] body,:root[data-cts-font='jetbrains-mono'] button,:root[data-cts-font='jetbrains-mono'] input,:root[data-cts-font='jetbrains-mono'] textarea,:root[data-cts-font='jetbrains-mono'] select{font-family:var(--app-font-family)}
 :root[data-cts-preset]:not([data-cts-preset='cpamp']) {
   --app-bg: var(--cts-bg-light); --app-bg-gradient:linear-gradient(125deg,color-mix(in srgb,var(--cts-primary) 9%,var(--cts-bg-light)),var(--cts-bg-light) 52%,color-mix(in srgb,var(--cts-secondary) 10%,var(--cts-bg-light)));
   --app-bg-blob-1-start:var(--cts-primary); --app-bg-blob-1-end:color-mix(in srgb,var(--cts-primary) 45%,#fff); --app-bg-blob-2-start:var(--cts-secondary); --app-bg-blob-2-end:color-mix(in srgb,var(--cts-secondary) 44%,#fff);
@@ -308,18 +342,15 @@
 :root[data-cts-radius='xl']{--app-radius-lg:30px;--app-radius-md:20px;--app-radius-sm:13px}
 :root[data-cts-density='compact']{--app-gap:14px;--app-card-padding:18px;--sidebar-width:198px;--floating-control-size:32px}
 :root[data-cts-density='comfortable']{--app-gap:24px;--app-card-padding:28px;--sidebar-width:224px;--floating-control-size:38px}
-:root[data-cts-font='system'] body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC','Microsoft YaHei',sans-serif}
-:root[data-cts-font='modern'] body{font-family:Inter,'Segoe UI Variable','Segoe UI','PingFang SC','Microsoft YaHei',sans-serif}
-:root[data-cts-font='serif'] body{font-family:ui-serif,Georgia,Cambria,'Times New Roman','Noto Serif SC','Songti SC',serif}
 @media(min-width:1280px){:root[data-cts-layout='centered'] .main-content:not(.main-content-logs):not(.main-content-plugin-resource){max-width:1440px;margin-inline:auto}}
 `;
 
     var studioCSS = String.raw`
-:host{all:initial;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--app-text-primary,#202a38)}
-*,*::before,*::after{box-sizing:border-box}.ts-launcher{position:fixed;right:18px;bottom:18px;z-index:2147483000;width:46px;height:46px;display:grid;place-items:center;border:1px solid var(--app-border-strong,rgba(15,23,42,.16));border-radius:15px;background:var(--app-surface-strong,#fff);color:var(--primary-color,#3b82f6);box-shadow:0 14px 38px rgba(15,23,42,.2);cursor:pointer;transition:transform .16s ease,box-shadow .16s ease}.ts-launcher:hover{transform:translateY(-2px);box-shadow:0 18px 44px rgba(15,23,42,.24)}.ts-launcher svg{width:23px;height:23px}
+:host{all:initial;font-family:'JetBrains Mono','PingFang SC','Microsoft YaHei',monospace;color:var(--app-text-primary,#202a38)}
+*,*::before,*::after{box-sizing:border-box}.ts-launcher{position:fixed;right:18px;bottom:18px;z-index:2147483000;width:46px;height:46px;display:grid;place-items:center;border:1px solid var(--app-border-strong,rgba(15,23,42,.16));border-radius:15px;background:var(--app-surface-strong,#fff);color:var(--primary-color,#3b82f6);box-shadow:0 14px 38px rgba(15,23,42,.2);cursor:pointer;touch-action:manipulation;transition:transform .16s ease,box-shadow .16s ease}.ts-launcher:hover{transform:translateY(-2px);box-shadow:0 18px 44px rgba(15,23,42,.24)}.ts-launcher svg{width:23px;height:23px}
 .ts-stage{position:fixed;inset:0;z-index:2147483001;display:grid;grid-template-columns:1fr min(460px,100vw)}.ts-stage[hidden]{display:none}.ts-scrim{grid-area:1/1/2/3;border:0;background:rgba(5,10,20,.54);backdrop-filter:blur(2px);cursor:default}.ts-deck{grid-area:1/2;position:relative;display:flex;min-width:0;flex-direction:column;height:100%;background:var(--app-surface-strong,#fff);border-left:1px solid var(--app-border-strong,rgba(15,23,42,.16));box-shadow:-26px 0 70px rgba(5,10,20,.22);animation:ts-enter .22s cubic-bezier(.22,1,.36,1) both}
-.ts-accent{height:5px;background:linear-gradient(90deg,var(--primary-color,#3b82f6),color-mix(in srgb,var(--primary-color,#3b82f6) 35%,#f0abfc))}.ts-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:20px 22px 16px;border-bottom:1px solid var(--app-border,rgba(15,23,42,.09))}.ts-head h2{margin:0 0 5px;font-size:19px;line-height:1.2}.ts-head p{margin:0;color:var(--app-text-muted,#778397);font-size:12px;line-height:1.45}.ts-close{width:40px;height:40px;flex:0 0 40px;border:0;border-radius:11px;background:transparent;color:inherit;font-size:20px;cursor:pointer}.ts-close:hover{background:var(--app-accent-soft,rgba(59,130,246,.1))}.ts-scope{margin:14px 22px 0;padding:9px 11px;border:1px solid var(--app-border,rgba(15,23,42,.09));border-radius:10px;background:var(--surface-subtle,rgba(15,23,42,.035));color:var(--app-text-regular,#5d6a7c);font-size:11px;line-height:1.4}
-.ts-body{flex:1;overflow:auto;padding:4px 22px 26px;overscroll-behavior:contain}.ts-section{padding:20px 0;border-bottom:1px solid var(--app-border,rgba(15,23,42,.09))}.ts-section:last-child{border-bottom:0}.ts-section h3{margin:0 0 12px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--app-text-regular,#5d6a7c)}.ts-grid{display:grid;gap:8px}.ts-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}.ts-grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.ts-grid-5{grid-template-columns:repeat(5,minmax(0,1fr))}.ts-button{min-width:0;min-height:42px;padding:8px;border:1px solid var(--app-border,rgba(15,23,42,.1));border-radius:11px;background:var(--app-surface-muted,rgba(255,255,255,.7));color:var(--app-text-regular,#566477);font:600 11px/1.25 inherit;cursor:pointer;transition:border-color .14s ease,background .14s ease,color .14s ease}.ts-button:hover{border-color:color-mix(in srgb,var(--primary-color,#3b82f6) 38%,transparent);color:var(--app-text-primary,#202a38)}.ts-button[aria-pressed='true']{border-color:var(--primary-color,#3b82f6);background:color-mix(in srgb,var(--primary-color,#3b82f6) 9%,var(--app-surface-strong,#fff));color:var(--primary-color,#3b82f6)}
+.ts-accent{height:5px;background:linear-gradient(90deg,var(--primary-color,#3b82f6),color-mix(in srgb,var(--primary-color,#3b82f6) 35%,#f0abfc))}.ts-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:20px 22px 16px;border-bottom:1px solid var(--app-border,rgba(15,23,42,.09))}.ts-head h2{margin:0 0 5px;font-size:19px;line-height:1.2}.ts-head p{margin:0;color:var(--app-text-muted,#778397);font-size:12px;line-height:1.45}.ts-close{width:44px;height:44px;flex:0 0 44px;border:0;border-radius:11px;background:transparent;color:inherit;font-size:20px;cursor:pointer;touch-action:manipulation}.ts-close:hover{background:var(--app-accent-soft,rgba(59,130,246,.1))}.ts-scope{margin:14px 22px 0;padding:9px 11px;border:1px solid var(--app-border,rgba(15,23,42,.09));border-radius:10px;background:var(--surface-subtle,rgba(15,23,42,.035));color:var(--app-text-regular,#5d6a7c);font-size:11px;line-height:1.4}
+.ts-body{flex:1;overflow:auto;padding:4px 22px 26px;overscroll-behavior:contain}.ts-section{padding:20px 0;border-bottom:1px solid var(--app-border,rgba(15,23,42,.09))}.ts-section:last-child{border-bottom:0}.ts-section h3{margin:0 0 12px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--app-text-regular,#5d6a7c)}.ts-grid{display:grid;gap:8px}.ts-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}.ts-grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.ts-grid-5{grid-template-columns:repeat(5,minmax(0,1fr))}.ts-button{min-width:0;min-height:44px;padding:8px;border:1px solid var(--app-border,rgba(15,23,42,.1));border-radius:11px;background:var(--app-surface-muted,rgba(255,255,255,.7));color:var(--app-text-regular,#566477);font:600 11px/1.25 inherit;cursor:pointer;touch-action:manipulation;transition:border-color .14s ease,background .14s ease,color .14s ease}.ts-button:hover{border-color:color-mix(in srgb,var(--primary-color,#3b82f6) 38%,transparent);color:var(--app-text-primary,#202a38)}.ts-button[aria-pressed='true']{border-color:var(--primary-color,#3b82f6);background:color-mix(in srgb,var(--primary-color,#3b82f6) 9%,var(--app-surface-strong,#fff));color:var(--primary-color,#3b82f6)}
 .ts-preset{display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:9px;min-height:56px;text-align:left}.ts-swatches{display:flex;width:34px;height:30px;overflow:hidden;border:1px solid rgba(127,127,127,.22);border-radius:8px}.ts-swatches i{flex:1}.ts-preset span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ts-custom{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px}.ts-custom input{width:38px;height:32px;padding:2px;border:1px solid var(--app-border-strong,rgba(15,23,42,.15));border-radius:8px;background:transparent;cursor:pointer}.ts-radius{display:block;width:26px;height:18px;margin:0 auto 5px;border:2px solid currentColor}.ts-radius-sm{border-radius:3px}.ts-radius-md{border-radius:6px}.ts-radius-lg{border-radius:10px}.ts-radius-xl{border-radius:15px}.ts-layout{min-height:62px}.ts-footer{padding:13px 22px;border-top:1px solid var(--app-border,rgba(15,23,42,.09))}.ts-reset{width:100%;min-height:42px}.ts-launcher:focus-visible,.ts-button:focus-visible,.ts-close:focus-visible,input:focus-visible{outline:2px solid var(--primary-color,#3b82f6);outline-offset:2px}
 @keyframes ts-enter{from{opacity:.5;transform:translateX(28px)}}@media(max-width:560px){.ts-launcher{right:12px;bottom:12px}.ts-stage{grid-template-columns:1fr}.ts-scrim,.ts-deck{grid-area:1/1}.ts-deck{border-left:0}.ts-head{padding:17px 16px 14px}.ts-scope{margin-inline:16px}.ts-body{padding-inline:16px}.ts-footer{padding:11px 16px}.ts-grid-2{grid-template-columns:1fr}.ts-grid-5{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(prefers-reduced-motion:reduce){.ts-deck{animation:none}.ts-launcher{transition:none}}
 `;
@@ -329,9 +360,10 @@
       if (!style) {
         style = doc.createElement('style');
         style.id = styleID;
-        style.textContent = themeCSS;
         (doc.head || root).appendChild(style);
       }
+      if (style.textContent !== themeCSS) style.textContent = themeCSS;
+      return style;
     }
 
     function paletteName(value) {
@@ -372,14 +404,13 @@
         '<section class="ts-section"><h3>' + tr('radius') + '</h3><div class="ts-grid ts-grid-5">' +
         button('radius','default',tr('normal'),'','<i class="ts-radius ts-radius-md"></i>') + button('radius','none',tr('square'),'','<i class="ts-radius"></i>') + button('radius','sm',tr('small'),'','<i class="ts-radius ts-radius-sm"></i>') + button('radius','md',tr('medium'),'','<i class="ts-radius ts-radius-md"></i>') + button('radius','lg',tr('large'),'','<i class="ts-radius ts-radius-lg"></i>') + button('radius','xl',tr('xlarge'),'','<i class="ts-radius ts-radius-xl"></i>') + '</div></section>' +
         '<section class="ts-section"><h3>' + tr('density') + '</h3><div class="ts-grid ts-grid-3">' + button('density','compact',tr('compact')) + button('density','default',tr('normal')) + button('density','comfortable',tr('comfortable')) + '</div></section>' +
-        '<section class="ts-section"><h3>' + tr('font') + '</h3><div class="ts-grid ts-grid-3">' + button('font','system',tr('system')) + button('font','modern',tr('modern')) + button('font','serif',tr('serif')) + '</div></section>' +
         '<section class="ts-section"><h3>' + tr('layout') + '</h3><div class="ts-grid ts-grid-2">' + button('contentLayout','full',tr('full'),'ts-layout') + button('contentLayout','centered',tr('centered'),'ts-layout') + '</div></section>' +
         '<section class="ts-section"><h3>' + tr('effects') + '</h3><div class="ts-grid ts-grid-2">' + button('effects','full',tr('rich')) + button('effects','reduced',tr('efficient')) + '</div></section>' +
         '</div><footer class="ts-footer"><button type="button" class="ts-button ts-reset" data-action="reset">↺ ' + tr('reset') + '</button></footer></section></div>';
     }
 
     function refreshControls() {
-      if (!shadow) return;
+      if (!isMounted()) return;
       Array.prototype.forEach.call(shadow.querySelectorAll('[data-action][data-value]'), function (control) {
         var active = state[control.getAttribute('data-action')] === control.getAttribute('data-value');
         control.setAttribute('aria-pressed', active ? 'true' : 'false');
@@ -390,27 +421,74 @@
       if (colorInput) colorInput.value = state.customAccent;
     }
 
-    function open() {
-      if (!mounted) {
-        shouldOpen = true;
+    function isMounted() {
+      return Boolean(
+        mount && mount.isConnected && shadow && shadow.host === mount &&
+        doc.getElementById(mountID) === mount
+      );
+    }
+
+    function stageElement() {
+      return isMounted() ? shadow.querySelector('.ts-stage') : null;
+    }
+
+    function isOpen() {
+      var stage = stageElement();
+      return Boolean(stage && !stage.hidden);
+    }
+
+    function lockBodyScroll() {
+      if (!doc.body) return;
+      if (overflowOwner === doc.body) {
+        doc.body.style.overflow = 'hidden';
         return;
       }
-      if (opened) return;
-      opened = true;
-      returnFocus = doc.activeElement;
-      previousOverflow = doc.body.style.overflow;
-      doc.body.style.overflow = 'hidden';
-      shadow.querySelector('.ts-stage').hidden = false;
-      shadow.querySelector('.ts-close').focus();
+      releaseBodyScroll();
+      overflowOwner = doc.body;
+      previousOverflow = overflowOwner.style.overflow;
+      overflowOwner.style.overflow = 'hidden';
+    }
+
+    function releaseBodyScroll() {
+      if (!overflowOwner) return;
+      overflowOwner.style.overflow = previousOverflow;
+      overflowOwner = null;
+      previousOverflow = '';
+    }
+
+    function revealStage() {
+      var stage = stageElement();
+      if (!stage) return false;
+      if (stage.hidden) {
+        returnFocus = doc.activeElement;
+        stage.hidden = false;
+      }
+      lockBodyScroll();
+      var closeButton = shadow.querySelector('.ts-close');
+      if (closeButton) closeButton.focus();
+      return true;
+    }
+
+    function open() {
+      openRequested = true;
+      ensureThemeStyle();
+      if (!ensureMounted()) {
+        scheduleEnsure();
+        return;
+      }
+      revealStage();
     }
 
     function close() {
-      if (!mounted || !opened) return;
-      opened = false;
-      shadow.querySelector('.ts-stage').hidden = true;
-      doc.body.style.overflow = previousOverflow;
-      if (returnFocus && typeof returnFocus.focus === 'function') returnFocus.focus();
-      else shadow.querySelector('.ts-launcher').focus();
+      openRequested = false;
+      var stage = stageElement();
+      if (stage) stage.hidden = true;
+      releaseBodyScroll();
+
+      var focusTarget = returnFocus && returnFocus.isConnected ? returnFocus :
+        (isMounted() ? shadow.querySelector('.ts-launcher') : null);
+      returnFocus = null;
+      if (focusTarget && typeof focusTarget.focus === 'function') focusTarget.focus();
     }
 
     function reset() {
@@ -418,8 +496,17 @@
       applyState();
     }
 
+    function findInEventPath(event, selector) {
+      var path = event.composedPath ? event.composedPath() : [];
+      for (var index = 0; index < path.length; index += 1) {
+        var candidate = path[index];
+        if (candidate && typeof candidate.matches === 'function' && candidate.matches(selector)) return candidate;
+      }
+      return event.target && event.target.closest ? event.target.closest(selector) : null;
+    }
+
     function handleClick(event) {
-      var control = event.target && event.target.closest ? event.target.closest('button') : null;
+      var control = findInEventPath(event, 'button');
       if (!control) return;
       if (control.classList.contains('ts-launcher')) return open();
       if (control.classList.contains('ts-close') || control.classList.contains('ts-scrim')) return close();
@@ -432,7 +519,7 @@
     }
 
     function handleKey(event) {
-      if (!opened) return;
+      if (!isOpen()) return;
       if (event.key === 'Escape') {
         event.preventDefault();
         close();
@@ -447,14 +534,38 @@
       else if (!event.shiftKey && shadow.activeElement === last) { event.preventDefault(); first.focus(); }
     }
 
-    function mount() {
-      if (mounted || !doc.body) return;
+    function publishRuntime() {
+      [win, root, mount].forEach(function (target) {
+        if (!target) return;
+        try {
+          Object.defineProperty(target, '__CPAMP_THEME_STUDIO__', {
+            configurable: true,
+            enumerable: false,
+            writable: true,
+            value: runtime
+          });
+        } catch (_) {
+          try { target.__CPAMP_THEME_STUDIO__ = runtime; } catch (_) { /* read-only host */ }
+        }
+      });
+    }
+
+    function ensureMounted() {
+      if (!doc.body) return false;
+      if (isMounted()) {
+        publishRuntime();
+        return true;
+      }
+
+      releaseBodyScroll();
       var existing = doc.getElementById(mountID);
       if (existing) existing.remove();
-      var host = doc.createElement('div');
-      host.id = mountID;
-      doc.body.appendChild(host);
-      shadow = host.attachShadow({ mode: 'open' });
+
+      mount = doc.createElement('div');
+      mount.id = mountID;
+      mount.setAttribute('data-version', runtimeVersion);
+      doc.body.appendChild(mount);
+      shadow = mount.attachShadow({ mode: 'open' });
       var style = doc.createElement('style');
       style.textContent = studioCSS;
       shadow.appendChild(style);
@@ -462,23 +573,70 @@
       shell.innerHTML = markup();
       shadow.appendChild(shell);
       shadow.addEventListener('click', handleClick);
-      shadow.addEventListener('keydown', handleKey);
       shadow.addEventListener('input', function (event) {
-        if (event.target && event.target.getAttribute('data-action') === 'custom') {
-          state.customAccent = normalizeHex(event.target.value, state.customAccent);
+        var input = findInEventPath(event, 'input[data-action="custom"]');
+        if (input) {
+          state.customAccent = normalizeHex(input.value, state.customAccent);
           state.preset = 'custom';
           applyState();
         }
       });
-      mounted = true;
+      publishRuntime();
       refreshControls();
-      if (shouldOpen) open();
+      if (openRequested) revealStage();
+      return true;
     }
 
+    function scheduleEnsure() {
+      if (remountScheduled) return;
+      remountScheduled = true;
+      var schedule = win.requestAnimationFrame || function (callback) { return win.setTimeout(callback, 0); };
+      schedule(function () {
+        remountScheduled = false;
+        ensureThemeStyle();
+        ensureMounted();
+      });
+    }
+
+    function watchHostDOM() {
+      if (observer || !win.MutationObserver || !root) return;
+      observer = new win.MutationObserver(function () {
+        if (!isMounted() || !doc.getElementById(styleID)) scheduleEnsure();
+      });
+      observer.observe(root, { childList: true, subtree: true });
+    }
+
+    var runtime = {
+      version: runtimeVersion,
+      ensure: function () {
+        ensureThemeStyle();
+        var ready = ensureMounted();
+        publishRuntime();
+        return ready;
+      },
+      open: open,
+      close: close,
+      reset: reset,
+      getState: function () { return cloneState(state); },
+      getDebugState: function () {
+        return {
+          mounted: isMounted(),
+          open: isOpen(),
+          mountCount: doc.querySelectorAll('#' + mountID).length,
+          overflowLocked: Boolean(overflowOwner),
+          stageCount: isMounted() ? shadow.querySelectorAll('.ts-stage').length : 0,
+          launcherCount: isMounted() ? shadow.querySelectorAll('.ts-launcher').length : 0
+        };
+      }
+    };
+
+    publishRuntime();
     ensureThemeStyle();
     applyState();
-    if (doc.body) mount();
-    else doc.addEventListener('DOMContentLoaded', mount, { once: true });
+    if (doc.body) ensureMounted();
+    else doc.addEventListener('DOMContentLoaded', ensureMounted, { once: true });
+    doc.addEventListener('keydown', handleKey, true);
+    watchHostDOM();
 
     if (win.matchMedia) {
       var colorScheme = win.matchMedia('(prefers-color-scheme: dark)');
@@ -487,12 +645,6 @@
       else if (colorScheme.addListener) colorScheme.addListener(onSchemeChange);
     }
 
-    hostWindow.__CPAMP_THEME_STUDIO__ = {
-      version: runtimeVersion,
-      open: open,
-      close: close,
-      reset: reset,
-      getState: function () { return cloneState(state); }
-    };
+    publishRuntime();
   }
 })();

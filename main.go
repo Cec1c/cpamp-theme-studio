@@ -71,6 +71,15 @@ var pluginVersion = "0.0.0-dev"
 //go:embed assets/loader.js
 var loaderJavaScript []byte
 
+// JetBrains Mono is bundled so the injected panel never depends on a CDN or a
+// font being installed on the host machine.
+//
+//go:embed assets/fonts/JetBrainsMono-Regular.woff2
+var jetBrainsMonoRegular []byte
+
+//go:embed assets/fonts/JetBrainsMono-SemiBold.woff2
+var jetBrainsMonoSemiBold []byte
+
 type envelope struct {
 	OK     bool            `json:"ok"`
 	Result json.RawMessage `json:"result,omitempty"`
@@ -202,8 +211,11 @@ func handleMethod(method string, request []byte) ([]byte, error) {
 		return okEnvelope(pluginRegistration())
 	case methodManagementRegister:
 		return okEnvelope(managementRegistration{Resources: []managementResource{{
-			Path:        "/studio",
-			Menu:        "Theme Studio",
+			Path: "/studio",
+			// An empty Menu keeps the browser resource route available without
+			// publishing a redundant CPAMP sidebar entry. The injected floating
+			// launcher is the single user-facing entry point.
+			Menu:        "",
 			Description: "Customize CPAMP color, shape, density, typography, layout, and visual effects.",
 		}}})
 	case methodManagementHandle:
@@ -261,6 +273,10 @@ func handleManagement(raw []byte) ([]byte, error) {
 			"Cross-Origin-Resource-Policy": "same-origin",
 			"ETag":                         loaderETag(),
 		}))
+	case "font-regular":
+		return okEnvelope(immutableAssetResponse(method, "font/woff2", jetBrainsMonoRegular))
+	case "font-semibold":
+		return okEnvelope(immutableAssetResponse(method, "font/woff2", jetBrainsMonoSemiBold))
 	case "":
 		body := renderStudioLanding(snapshotInjectorStatus())
 		if method == http.MethodHead {
@@ -279,6 +295,18 @@ func handleManagement(raw []byte) ([]byte, error) {
 	}
 }
 
+func immutableAssetResponse(method, contentType string, asset []byte) managementResponse {
+	body := asset
+	if method == http.MethodHead {
+		body = nil
+	}
+	return resourceResponse(http.StatusOK, contentType, body, map[string]string{
+		"Cache-Control":                "public, max-age=31536000, immutable",
+		"Cross-Origin-Resource-Policy": "same-origin",
+		"ETag":                         staticAssetETag(asset),
+	})
+}
+
 func resourceResponse(status int, contentType string, body []byte, extra map[string]string) managementResponse {
 	headers := http.Header{
 		"Content-Type":                 []string{contentType},
@@ -294,7 +322,11 @@ func resourceResponse(status int, contentType string, body []byte, extra map[str
 }
 
 func loaderETag() string {
-	digest := sha256.Sum256(append(append([]byte(nil), loaderJavaScript...), []byte(pluginVersion)...))
+	return staticAssetETag(loaderJavaScript)
+}
+
+func staticAssetETag(asset []byte) string {
+	digest := sha256.Sum256(append(append([]byte(nil), asset...), []byte(pluginVersion)...))
 	return `"` + hex.EncodeToString(digest[:16]) + `"`
 }
 
@@ -322,7 +354,9 @@ func renderStudioLanding(status injectorStatus) []byte {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>CPAMP Theme Studio</title>
   <style>
-    :root{color-scheme:light dark;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    @font-face{font-family:"JetBrains Mono";src:url("?asset=font-regular&amp;v=` + url.QueryEscape(pluginVersion) + `") format("woff2");font-style:normal;font-weight:400;font-display:swap}
+    @font-face{font-family:"JetBrains Mono";src:url("?asset=font-semibold&amp;v=` + url.QueryEscape(pluginVersion) + `") format("woff2");font-style:normal;font-weight:600;font-display:swap}
+    :root{color-scheme:light dark;font-family:"JetBrains Mono","PingFang SC","Microsoft YaHei",monospace}
     *{box-sizing:border-box}body{display:grid;min-height:100vh;margin:0;place-items:center;background:var(--app-bg,#f3f6fa);color:var(--app-text-primary,#243041)}
     main{width:min(620px,calc(100% - 32px));padding:28px;border:1px solid var(--app-border,#dbe2ea);border-radius:18px;background:var(--app-surface-strong,#fff);box-shadow:0 18px 55px rgb(15 23 42/.10)}
     h1{margin:0 0 8px;font-size:22px}p{margin:8px 0;color:var(--app-text-regular,#58677a);line-height:1.65}.meta{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;color:var(--app-text-muted,#7b8797)}

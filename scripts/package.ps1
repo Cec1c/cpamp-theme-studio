@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$Version = '0.1.0-dev',
+    [string]$Version = '0.1.1-dev',
     [string]$Target = ''
 )
 
@@ -45,6 +45,7 @@ try {
     Copy-Item -LiteralPath (Join-Path $pluginRoot 'README.md') -Destination $stageFull
     Copy-Item -LiteralPath (Join-Path $pluginRoot 'README.zh-CN.md') -Destination $stageFull
     Copy-Item -LiteralPath (Join-Path $pluginRoot 'THIRD_PARTY_NOTICES.md') -Destination $stageFull
+    Copy-Item -LiteralPath (Join-Path $pluginRoot 'assets\fonts\OFL.txt') -Destination (Join-Path $stageFull 'JETBRAINS_MONO_OFL.txt')
     Copy-Item -LiteralPath (Join-Path $pluginRoot 'docs') -Destination $stageFull -Recurse
     if (Test-Path -LiteralPath $archivePath) {
         Remove-Item -LiteralPath $archivePath

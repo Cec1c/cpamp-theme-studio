@@ -14,6 +14,19 @@ This standalone project grew from a Theme Studio prototype authored for CPA Mana
 
 Project: <https://github.com/seakee/CPA-Manager-Plus>
 
+## JetBrains Mono
+
+The plugin embeds JetBrains Mono 2.304 Regular and SemiBold webfonts so the management panel and Theme Studio use the same typography without a network or system-font dependency. JetBrains Mono is Copyright 2020 The JetBrains Mono Project Authors and is distributed under the SIL Open Font License 1.1.
+
+Project: <https://github.com/JetBrains/JetBrainsMono>
+
+Release source: <https://github.com/JetBrains/JetBrainsMono/releases/tag/v2.304>
+
+The verbatim license is included at [`assets/fonts/OFL.txt`](assets/fonts/OFL.txt), and release archives include it as `JETBRAINS_MONO_OFL.txt`. Embedded file SHA-256 values:
+
+- `JetBrainsMono-Regular.woff2`: `a9cb1cd82332b23a47e3a1239d25d13c86d16c4220695e34b243effa999f45f2`
+- `JetBrainsMono-SemiBold.woff2`: `918edad542a1da608fd2ba8daebaff9ac802309103fe760eed465b8b4e47faf1`
+
 ## gopkg.in/yaml.v3
 
 The compiled plugin includes `gopkg.in/yaml.v3` v3.0.1 for safe configuration parsing. That module is dual-covered by MIT and Apache License 2.0 terms; see its upstream license for the per-file split.

@@ -79,6 +79,9 @@
     var returnFocus = null;
     var fontRegularURL = resourceAssetURL('font-regular');
     var fontSemiBoldURL = resourceAssetURL('font-semibold');
+    var restartBusy = false;
+    var restartBusyLabel = '';
+    var restartConfirmLayer = null;
 
     var defaults = {
       mode: 'auto',
@@ -128,6 +131,12 @@
         density: '界面密度', compact: '紧凑', comfortable: '舒适',
         layout: '内容宽度', full: '铺满', centered: '居中', effects: '视觉效果', rich: '完整效果', efficient: '性能优先',
         scopeHost: '已连接宿主面板', scopeFrame: '当前为独立预览；请配置可写面板以全局生效',
+        restartAction: '重启 CPA', restartConfirmTitle: '确认重启 CPA', restartConfirm: '重启会短暂中断正在进行的请求。确认现在重启 CPA？', restartCancel: '取消',
+        restartPreparing: '正在请求重启…', restartWaiting: '正在等待 CPA 恢复…',
+        restartUnavailable: '当前部署无法安全自动重启 CPA，请检查插件的 restart_mode 和 restart_service 配置。',
+        restartFailed: 'CPA 自动重启失败，请检查服务权限和日志。',
+        restartSaveFailed: '无法通过 CPAMP 保存重启请求，请重试。',
+        restartTimeout: '重启指令已发送，但尚未确认 CPA 恢复。请稍后手动刷新页面。',
         pCpamp: 'CPAMP 蓝', pEmber: '余烬暮色', pJade: '翡翠电路', pCoral: '珊瑚薄雾', pGlacier: '冰川信号',
         pSolar: '日冕', pMoss: '苔石', pDeep: '深流', pAmethyst: '紫晶雾', pGraphite: '石墨'
       },
@@ -139,6 +148,12 @@
         density: '介面密度', compact: '緊湊', comfortable: '舒適',
         layout: '內容寬度', full: '鋪滿', centered: '置中', effects: '視覺效果', rich: '完整效果', efficient: '效能優先',
         scopeHost: '已連接宿主面板', scopeFrame: '目前為獨立預覽；請設定可寫面板以全域生效',
+        restartAction: '重新啟動 CPA', restartConfirmTitle: '確認重新啟動 CPA', restartConfirm: '重新啟動會短暫中斷正在進行的請求。確認現在重新啟動 CPA？', restartCancel: '取消',
+        restartPreparing: '正在要求重新啟動…', restartWaiting: '正在等待 CPA 恢復…',
+        restartUnavailable: '目前部署無法安全自動重新啟動 CPA，請檢查 restart_mode 與 restart_service 設定。',
+        restartFailed: 'CPA 自動重新啟動失敗，請檢查服務權限與日誌。',
+        restartSaveFailed: '無法透過 CPAMP 儲存重新啟動要求，請重試。',
+        restartTimeout: '重新啟動指令已送出，但尚未確認 CPA 恢復。請稍後手動重新整理頁面。',
         pCpamp: 'CPAMP 藍', pEmber: '餘燼暮色', pJade: '翡翠電路', pCoral: '珊瑚薄霧', pGlacier: '冰川訊號',
         pSolar: '日冕', pMoss: '苔石', pDeep: '深流', pAmethyst: '紫晶霧', pGraphite: '石墨'
       },
@@ -150,6 +165,12 @@
         density: 'Density', compact: 'Compact', comfortable: 'Comfortable',
         layout: 'Content width', full: 'Full width', centered: 'Centered', effects: 'Visual effects', rich: 'Full effects', efficient: 'Performance',
         scopeHost: 'Connected to the host panel', scopeFrame: 'Standalone preview; configure a writable panel for global startup',
+        restartAction: 'Restart CPA', restartConfirmTitle: 'Confirm CPA restart', restartConfirm: 'Restarting briefly interrupts active requests. Restart CPA now?', restartCancel: 'Cancel',
+        restartPreparing: 'Requesting restart…', restartWaiting: 'Waiting for CPA to recover…',
+        restartUnavailable: 'This deployment cannot safely restart CPA automatically. Check restart_mode and restart_service.',
+        restartFailed: 'CPA restart failed. Check service permissions and logs.',
+        restartSaveFailed: 'CPAMP could not save the restart request. Try again.',
+        restartTimeout: 'The restart command was sent, but CPA recovery was not confirmed. Refresh the page later.',
         pCpamp: 'CPAMP Blue', pEmber: 'Ember Dusk', pJade: 'Jade Circuit', pCoral: 'Coral Mist', pGlacier: 'Glacier Signal',
         pSolar: 'Solar Flare', pMoss: 'Moss Stone', pDeep: 'Deep Current', pAmethyst: 'Amethyst Fog', pGraphite: 'Graphite'
       },
@@ -161,6 +182,12 @@
         density: 'Плотность', compact: 'Компактная', comfortable: 'Просторная',
         layout: 'Ширина', full: 'На всю ширину', centered: 'По центру', effects: 'Эффекты', rich: 'Полные', efficient: 'Производительность',
         scopeHost: 'Подключено к панели', scopeFrame: 'Автономный просмотр; для запуска везде настройте доступный файл панели',
+        restartAction: 'Перезапустить CPA', restartConfirmTitle: 'Подтвердите перезапуск CPA', restartConfirm: 'Перезапуск кратковременно прервёт активные запросы. Перезапустить CPA сейчас?', restartCancel: 'Отмена',
+        restartPreparing: 'Запрос перезапуска…', restartWaiting: 'Ожидание восстановления CPA…',
+        restartUnavailable: 'Это развёртывание не может безопасно перезапустить CPA автоматически. Проверьте restart_mode и restart_service.',
+        restartFailed: 'Не удалось перезапустить CPA. Проверьте права службы и журналы.',
+        restartSaveFailed: 'CPAMP не смог сохранить запрос перезапуска. Повторите попытку.',
+        restartTimeout: 'Команда отправлена, но восстановление CPA не подтверждено. Обновите страницу позже.',
         pCpamp: 'CPAMP Blue', pEmber: 'Ember Dusk', pJade: 'Jade Circuit', pCoral: 'Coral Mist', pGlacier: 'Glacier Signal',
         pSolar: 'Solar Flare', pMoss: 'Moss Stone', pDeep: 'Deep Current', pAmethyst: 'Amethyst Fog', pGraphite: 'Graphite'
       }
@@ -363,6 +390,26 @@
 :root[data-cts-density='compact']{--app-gap:14px;--app-card-padding:18px;--sidebar-width:198px;--floating-control-size:32px}
 :root[data-cts-density='comfortable']{--app-gap:24px;--app-card-padding:28px;--sidebar-width:224px;--floating-control-size:38px}
 @media(min-width:1280px){:root[data-cts-layout='centered'] .main-content:not(.main-content-logs):not(.main-content-plugin-resource){max-width:1440px;margin-inline:auto}}
+button.cpamp-theme-studio-restart-control{min-height:44px;touch-action:manipulation;color:var(--app-danger,#b42318);border-color:color-mix(in srgb,var(--app-danger,#b42318) 32%,var(--app-border,transparent));background:color-mix(in srgb,var(--app-danger,#b42318) 7%,var(--app-surface-strong,#fff));transition:background .18s ease,border-color .18s ease,color .18s ease,opacity .18s ease}
+button.cpamp-theme-studio-restart-control:hover:not(:disabled){color:var(--app-danger-strong,#8f1d14);border-color:color-mix(in srgb,var(--app-danger,#b42318) 55%,var(--app-border,transparent));background:color-mix(in srgb,var(--app-danger,#b42318) 12%,var(--app-surface-strong,#fff))}
+button.cpamp-theme-studio-restart-control:focus-visible{outline:2px solid var(--app-danger,#b42318);outline-offset:2px}
+button.cpamp-theme-studio-restart-control:disabled{cursor:not-allowed;opacity:.58}
+button.cpamp-theme-studio-restart-control svg{width:16px;height:16px;flex:none}
+button.cpamp-theme-studio-restart-control[aria-busy='true'] svg{animation:cts-restart-spin .9s linear infinite}
+.cts-restart-confirm-layer{position:fixed;inset:0;z-index:2147483002;display:grid;place-items:center;padding:16px;font-family:var(--app-font-family,'JetBrains Mono','PingFang SC','Microsoft YaHei',monospace)}
+.cts-restart-confirm-scrim{position:absolute;inset:0;background:rgba(5,10,20,.58);backdrop-filter:blur(2px)}
+.cts-restart-confirm-dialog{position:relative;width:min(420px,calc(100vw - 32px));padding:22px;border:1px solid var(--app-border-strong,rgba(15,23,42,.16));border-radius:var(--app-radius-lg,16px);background:var(--app-surface-strong,#fff);color:var(--app-text-primary,#202a38);box-shadow:0 24px 72px rgba(5,10,20,.32)}
+.cts-restart-confirm-heading{display:flex;align-items:center;gap:12px;margin-bottom:10px}.cts-restart-confirm-heading svg{width:22px;height:22px;flex:none;color:var(--app-danger,#b42318)}
+.cts-restart-confirm-heading h2{margin:0;font:600 18px/1.35 inherit}.cts-restart-confirm-dialog p{margin:0;color:var(--app-text-regular,#5d6a7c);font:400 14px/1.6 inherit}
+.cts-restart-confirm-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.cts-restart-confirm-actions button{min-width:96px;min-height:44px;padding:8px 16px;border:1px solid var(--app-border-strong,rgba(15,23,42,.16));border-radius:var(--app-radius-md,10px);font:600 14px/1.3 inherit;cursor:pointer;touch-action:manipulation;transition:background .18s ease,border-color .18s ease,color .18s ease}
+.cts-restart-confirm-cancel{background:var(--app-surface-muted,rgba(255,255,255,.72));color:var(--app-text-primary,#202a38)}.cts-restart-confirm-cancel:hover{background:var(--app-accent-soft,rgba(59,130,246,.1))}
+.cts-restart-confirm-accept{border-color:var(--app-danger,#b42318)!important;background:var(--app-danger,#b42318);color:#fff}.cts-restart-confirm-accept:hover{background:var(--app-danger-strong,#8f1d14)}
+.cts-restart-confirm-actions button:focus-visible{outline:3px solid color-mix(in srgb,var(--app-danger,#b42318) 38%,transparent);outline-offset:2px}
+.cts-restart-feedback{position:fixed;left:50%;bottom:24px;z-index:2147483003;display:flex;align-items:center;gap:12px;width:min(560px,calc(100vw - 32px));padding:12px 12px 12px 16px;border:1px solid color-mix(in srgb,var(--app-danger,#b42318) 38%,var(--app-border,transparent));border-radius:var(--app-radius-md,10px);background:var(--app-surface-strong,#fff);color:var(--app-text-primary,#202a38);box-shadow:0 18px 48px rgba(5,10,20,.25);font:400 14px/1.5 var(--app-font-family,'JetBrains Mono','PingFang SC','Microsoft YaHei',monospace)}
+.cts-restart-feedback::before{content:'';width:8px;height:8px;flex:none;border-radius:50%;background:var(--app-danger,#b42318)}.cts-restart-feedback span{flex:1;min-width:0}.cts-restart-feedback button{width:44px;height:44px;flex:0 0 44px;border:0;border-radius:var(--app-radius-sm,8px);background:transparent;color:inherit;cursor:pointer}.cts-restart-feedback button:hover{background:var(--app-accent-soft,rgba(59,130,246,.1))}.cts-restart-feedback button:focus-visible{outline:2px solid var(--app-danger,#b42318);outline-offset:2px}.cts-restart-feedback svg{width:18px;height:18px}
+@keyframes cts-restart-spin{to{transform:rotate(360deg)}}
+@media(max-width:480px){.cts-restart-confirm-dialog{padding:20px}.cts-restart-confirm-actions{flex-direction:column-reverse}.cts-restart-confirm-actions button{width:100%}}
+@media(prefers-reduced-motion:reduce){button.cpamp-theme-studio-restart-control,.cts-restart-confirm-actions button{transition:none}button.cpamp-theme-studio-restart-control[aria-busy='true'] svg{animation:none}}
 `;
 
     var studioCSS = String.raw`
@@ -498,6 +545,419 @@
       return true;
     }
 
+    function restartStatusURL() {
+      var value = resourceAssetURL('restart-status');
+      return value + (value.indexOf('?') >= 0 ? '&' : '?') + '_=' + Date.now();
+    }
+
+    function fetchRestartStatus() {
+      if (typeof win.fetch !== 'function') return Promise.reject(new Error(tr('restartUnavailable')));
+      return win.fetch(restartStatusURL(), { cache: 'no-store', credentials: 'same-origin' }).then(function (response) {
+        if (!response.ok) throw new Error(tr('restartUnavailable'));
+        return response.json();
+      });
+    }
+
+    function waitFor(check, timeout, message) {
+      var started = Date.now();
+      return new Promise(function (resolve, reject) {
+        function inspect() {
+          var value = null;
+          try { value = check(); } catch (_) { value = null; }
+          if (value) return resolve(value);
+          if (Date.now() - started >= timeout) return reject(new Error(message));
+          win.setTimeout(inspect, 60);
+        }
+        inspect();
+      });
+    }
+
+    function isThemeStudioContainer(container) {
+      return Boolean(container && normalizedControlLabel(container.textContent).indexOf('cpamp-theme-studio') >= 0);
+    }
+
+    function findInstalledPluginRow() {
+      var rows = doc.querySelectorAll('[role="row"]');
+      for (var index = 0; index < rows.length; index += 1) {
+        if (isThemeStudioContainer(rows[index]) && rows[index].querySelector('[role="cell"]')) return rows[index];
+      }
+      return null;
+    }
+
+    function buttonLabel(control) {
+      return normalizedControlLabel(
+        (control && (control.getAttribute('aria-label') || control.getAttribute('title'))) ||
+        (control && control.textContent) || ''
+      );
+    }
+
+    function matchesOneOf(value, choices) {
+      value = normalizedControlLabel(value);
+      for (var index = 0; index < choices.length; index += 1) {
+        if (value === normalizedControlLabel(choices[index])) return true;
+      }
+      return false;
+    }
+
+    function findManageButton(container) {
+      var buttons = container ? container.querySelectorAll('button') : [];
+      var labels = ['管理', 'Manage', 'Управление'];
+      for (var index = 0; index < buttons.length; index += 1) {
+        if (!buttons[index].hasAttribute('data-cpamp-theme-studio-restart') && matchesOneOf(buttonLabel(buttons[index]), labels)) return buttons[index];
+      }
+      return null;
+    }
+
+    function findEditConfigButton(row) {
+      if (!row) return null;
+      var cells = row.querySelectorAll('[role="cell"]');
+      var actionCell = cells.length ? cells[cells.length - 1] : row;
+      var buttons = actionCell.querySelectorAll('button');
+      var labels = ['编辑配置', '編輯設定', 'Edit config', 'Редактировать конфигурацию'];
+      for (var index = 0; index < buttons.length; index += 1) {
+        if (!buttons[index].hasAttribute('data-cpamp-theme-studio-restart') && matchesOneOf(buttonLabel(buttons[index]), labels)) return buttons[index];
+      }
+      for (var fallback = 0; fallback < buttons.length; fallback += 1) {
+        if (!buttons[fallback].hasAttribute('data-cpamp-theme-studio-restart')) return buttons[fallback];
+      }
+      return null;
+    }
+
+    function restartControlTemplate(container) {
+      if (!container) return null;
+      if (container.matches && container.matches('[role="row"]')) return findEditConfigButton(container);
+      return findManageButton(container);
+    }
+
+    function setRestartControlState(control, busy, label) {
+      if (!control) return;
+      var text = control.querySelector('[data-restart-label]');
+      if (text) text.textContent = label || tr('restartAction');
+      control.disabled = Boolean(busy);
+      control.setAttribute('aria-busy', busy ? 'true' : 'false');
+      control.setAttribute('aria-label', label || tr('restartAction'));
+      control.setAttribute('title', label || tr('restartAction'));
+    }
+
+    function syncRestartControls() {
+      var controls = doc.querySelectorAll('[data-cpamp-theme-studio-restart="true"]');
+      for (var index = 0; index < controls.length; index += 1) {
+        setRestartControlState(controls[index], restartBusy, restartBusyLabel || tr('restartAction'));
+      }
+    }
+
+    function createRestartControl(template) {
+      var control = doc.createElement('button');
+      control.type = 'button';
+      control.className = ((template && template.className) || '') + ' cpamp-theme-studio-restart-control';
+      control.setAttribute('data-cpamp-theme-studio-restart', 'true');
+      control.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8.1 8.1 0 1 0 2 5.3"/><path d="M20 4v7h-7"/></svg><span data-restart-label></span>';
+      setRestartControlState(control, restartBusy, restartBusyLabel || tr('restartAction'));
+      control.addEventListener('click', handleRestartControlClick);
+      return control;
+    }
+
+    function ensureRestartControl(container) {
+      if (!container || !isThemeStudioContainer(container) || container.querySelector('[data-cpamp-theme-studio-restart="true"]')) return;
+      var template = restartControlTemplate(container);
+      if (!template || !template.parentElement) return;
+      var control = createRestartControl(template);
+      template.parentElement.insertBefore(control, template.nextSibling);
+    }
+
+    function ensureRestartControls() {
+      var rows = doc.querySelectorAll('[role="row"]');
+      for (var rowIndex = 0; rowIndex < rows.length; rowIndex += 1) ensureRestartControl(rows[rowIndex]);
+      var articles = doc.querySelectorAll('article');
+      for (var articleIndex = 0; articleIndex < articles.length; articleIndex += 1) ensureRestartControl(articles[articleIndex]);
+      syncRestartControls();
+    }
+
+    function openInstalledPluginRow(origin) {
+      var row = findInstalledPluginRow();
+      if (row) return Promise.resolve(row);
+      var manage = findManageButton(origin);
+      if (manage) manage.click();
+      else {
+        var tabs = doc.querySelectorAll('[role="tab"]');
+        var labels = ['已安装', '已安裝', 'Installed', 'Установленные'];
+        for (var index = 0; index < tabs.length; index += 1) {
+          if (matchesOneOf(buttonLabel(tabs[index]), labels)) { tabs[index].click(); break; }
+        }
+      }
+      return waitFor(findInstalledPluginRow, 8000, tr('restartSaveFailed'));
+    }
+
+    function setNativeInputValue(input, value) {
+      var prototype = win.HTMLInputElement && win.HTMLInputElement.prototype;
+      var descriptor = prototype && Object.getOwnPropertyDescriptor(prototype, 'value');
+      if (descriptor && descriptor.set) descriptor.set.call(input, value);
+      else input.value = value;
+      input.dispatchEvent(new win.Event('input', { bubbles: true }));
+      input.dispatchEvent(new win.Event('change', { bubbles: true }));
+    }
+
+    function findSaveButton(input) {
+      var scope = input && input.closest ? input.closest('[role="dialog"]') : null;
+      scope = scope || doc.body;
+      var buttons = scope.querySelectorAll('button');
+      var labels = ['保存', '儲存', 'Save', 'Сохранить'];
+      for (var index = 0; index < buttons.length; index += 1) {
+        if (matchesOneOf(buttonLabel(buttons[index]), labels)) return buttons[index];
+      }
+      return null;
+    }
+
+    function saveRestartRequest(row, requestID) {
+      var edit = findEditConfigButton(row);
+      if (!edit || edit.disabled) return Promise.reject(new Error(tr('restartSaveFailed')));
+      edit.click();
+      return waitFor(function () { return doc.getElementById('plugin-field-restart_request'); }, 8000, tr('restartSaveFailed')).then(function (input) {
+        setNativeInputValue(input, requestID);
+        return new Promise(function (resolve) { win.setTimeout(function () { resolve(input); }, 100); });
+      }).then(function (input) {
+        var save = findSaveButton(input);
+        if (!save || save.disabled) throw new Error(tr('restartSaveFailed'));
+        save.click();
+      });
+    }
+
+    function waitForRestartRequest(requestID, processInstance) {
+      var started = Date.now();
+      return new Promise(function (resolve, reject) {
+        function inspect() {
+          fetchRestartStatus().then(function (status) {
+            if (status.request === requestID) {
+              if (status.state === 'failed' || status.state === 'unavailable') return reject(new Error(tr('restartFailed')));
+              if (status.state === 'scheduled' || status.state === 'executing' || status.state === 'accepted') return resolve(status);
+              if (processInstance && status.process_instance && status.process_instance !== processInstance && status.state === 'ready') return resolve(status);
+            }
+            if (Date.now() - started >= 12000) return reject(new Error(tr('restartSaveFailed')));
+            win.setTimeout(inspect, 300);
+          }).catch(function () {
+            if (Date.now() - started >= 12000) return reject(new Error(tr('restartSaveFailed')));
+            win.setTimeout(inspect, 300);
+          });
+        }
+        inspect();
+      });
+    }
+
+    function waitForRestartRecovery(processInstance, requestID) {
+      var started = Date.now();
+      var sawDisconnect = false;
+      return new Promise(function (resolve, reject) {
+        function inspect() {
+          fetchRestartStatus().then(function (status) {
+            if ((processInstance && status.process_instance !== processInstance) || (sawDisconnect && status.state === 'ready')) return resolve(status);
+            if (status.request === requestID && status.state === 'failed') return reject(new Error(tr('restartFailed')));
+            if (Date.now() - started >= 45000) return reject(new Error(tr('restartTimeout')));
+            win.setTimeout(inspect, 750);
+          }).catch(function () {
+            sawDisconnect = true;
+            if (Date.now() - started >= 45000) return reject(new Error(tr('restartTimeout')));
+            win.setTimeout(inspect, 750);
+          });
+        }
+        win.setTimeout(inspect, 900);
+      });
+    }
+
+    function waitForPanelLoader(timeout) {
+      var started = Date.now();
+      return new Promise(function (resolve) {
+        function inspect() {
+          var panelURL;
+          try {
+            panelURL = new URL(win.location.href);
+            panelURL.hash = '';
+            panelURL.searchParams.set('_cts_restart', Date.now().toString(36));
+          } catch (_) {
+            return resolve(false);
+          }
+          win.fetch(panelURL.href, { cache: 'no-store', credentials: 'same-origin' }).then(function (response) {
+            if (!response.ok) throw new Error('panel unavailable');
+            return response.text();
+          }).then(function (html) {
+            if (html.indexOf('data-cpamp-theme-studio-loader') >= 0) return resolve(true);
+            if (Date.now() - started >= timeout) return resolve(false);
+            win.setTimeout(inspect, 350);
+          }).catch(function () {
+            if (Date.now() - started >= timeout) return resolve(false);
+            win.setTimeout(inspect, 350);
+          });
+        }
+        inspect();
+      });
+    }
+
+    function showRestartError(message) {
+      var previous = doc.querySelector('.cts-restart-feedback');
+      if (previous && previous.parentElement) previous.parentElement.removeChild(previous);
+      var feedback = doc.createElement('div');
+      var text = doc.createElement('span');
+      var closeButton = doc.createElement('button');
+      feedback.className = 'cts-restart-feedback';
+      feedback.setAttribute('role', 'alert');
+      feedback.setAttribute('aria-live', 'assertive');
+      text.textContent = message || tr('restartFailed');
+      closeButton.type = 'button';
+      closeButton.setAttribute('aria-label', tr('close'));
+      closeButton.setAttribute('title', tr('close'));
+      closeButton.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+      closeButton.addEventListener('click', function () {
+        if (feedback.parentElement) feedback.parentElement.removeChild(feedback);
+      });
+      feedback.appendChild(text);
+      feedback.appendChild(closeButton);
+      doc.body.appendChild(feedback);
+      win.setTimeout(function () {
+        if (feedback.parentElement) feedback.parentElement.removeChild(feedback);
+      }, 8000);
+    }
+
+    function finishRestartControl(error) {
+      restartBusy = false;
+      restartBusyLabel = '';
+      syncRestartControls();
+      if (error) showRestartError(error.message || tr('restartFailed'));
+    }
+
+    function confirmRestart(origin) {
+      return new Promise(function (resolve) {
+        if (!doc.body || restartConfirmLayer) return resolve(false);
+
+        var layer = doc.createElement('div');
+        var scrim = doc.createElement('div');
+        var dialog = doc.createElement('section');
+        var heading = doc.createElement('div');
+        var icon = doc.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        var iconPath = doc.createElementNS('http://www.w3.org/2000/svg', 'path');
+        var title = doc.createElement('h2');
+        var description = doc.createElement('p');
+        var actions = doc.createElement('div');
+        var cancel = doc.createElement('button');
+        var accept = doc.createElement('button');
+        var titleID = 'cts-restart-confirm-title';
+        var descriptionID = 'cts-restart-confirm-description';
+        var settled = false;
+
+        restartConfirmLayer = layer;
+        layer.className = 'cts-restart-confirm-layer';
+        scrim.className = 'cts-restart-confirm-scrim';
+        scrim.setAttribute('aria-hidden', 'true');
+        dialog.className = 'cts-restart-confirm-dialog';
+        dialog.setAttribute('role', 'alertdialog');
+        dialog.setAttribute('aria-modal', 'true');
+        dialog.setAttribute('aria-labelledby', titleID);
+        dialog.setAttribute('aria-describedby', descriptionID);
+        heading.className = 'cts-restart-confirm-heading';
+        icon.setAttribute('viewBox', '0 0 24 24');
+        icon.setAttribute('fill', 'none');
+        icon.setAttribute('stroke', 'currentColor');
+        icon.setAttribute('stroke-width', '2');
+        icon.setAttribute('stroke-linecap', 'round');
+        icon.setAttribute('stroke-linejoin', 'round');
+        icon.setAttribute('aria-hidden', 'true');
+        iconPath.setAttribute('d', 'M20 11a8.1 8.1 0 1 0 2 5.3M20 4v7h-7');
+        icon.appendChild(iconPath);
+        title.id = titleID;
+        title.textContent = tr('restartConfirmTitle');
+        description.id = descriptionID;
+        description.textContent = tr('restartConfirm');
+        actions.className = 'cts-restart-confirm-actions';
+        cancel.type = 'button';
+        cancel.className = 'cts-restart-confirm-cancel';
+        cancel.textContent = tr('restartCancel');
+        accept.type = 'button';
+        accept.className = 'cts-restart-confirm-accept';
+        accept.textContent = tr('restartAction');
+
+        heading.appendChild(icon);
+        heading.appendChild(title);
+        actions.appendChild(cancel);
+        actions.appendChild(accept);
+        dialog.appendChild(heading);
+        dialog.appendChild(description);
+        dialog.appendChild(actions);
+        layer.appendChild(scrim);
+        layer.appendChild(dialog);
+
+        function settle(value) {
+          if (settled) return;
+          settled = true;
+          doc.removeEventListener('keydown', handleConfirmKey, true);
+          if (layer.parentElement) layer.parentElement.removeChild(layer);
+          restartConfirmLayer = null;
+          releaseBodyScroll();
+          if (origin && origin.isConnected && typeof origin.focus === 'function') origin.focus();
+          resolve(value);
+        }
+
+        function handleConfirmKey(event) {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            event.stopPropagation();
+            settle(false);
+            return;
+          }
+          if (event.key !== 'Tab') return;
+          if (event.shiftKey && doc.activeElement === cancel) {
+            event.preventDefault();
+            accept.focus();
+          } else if (!event.shiftKey && doc.activeElement === accept) {
+            event.preventDefault();
+            cancel.focus();
+          }
+        }
+
+        scrim.addEventListener('click', function () { settle(false); });
+        cancel.addEventListener('click', function () { settle(false); });
+        accept.addEventListener('click', function () { settle(true); });
+        doc.addEventListener('keydown', handleConfirmKey, true);
+        doc.body.appendChild(layer);
+        lockBodyScroll();
+        cancel.focus();
+      });
+    }
+
+    function startRestart(origin) {
+      var requestID = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+      var processInstance = '';
+      restartBusy = true;
+      restartBusyLabel = tr('restartPreparing');
+      syncRestartControls();
+
+      fetchRestartStatus().then(function (status) {
+        if (!status.available) throw new Error(tr('restartUnavailable'));
+        processInstance = status.process_instance || '';
+        return openInstalledPluginRow(origin);
+      }).then(function (row) {
+        return saveRestartRequest(row, requestID);
+      }).then(function () {
+        return waitForRestartRequest(requestID, processInstance);
+      }).then(function () {
+        restartBusyLabel = tr('restartWaiting');
+        syncRestartControls();
+        return waitForRestartRecovery(processInstance, requestID);
+      }).then(function () {
+        return waitForPanelLoader(12000);
+      }).then(function () {
+        win.location.reload();
+      }).catch(finishRestartControl);
+    }
+
+    function handleRestartControlClick(event) {
+      if (restartBusy || restartConfirmLayer) return;
+      event.preventDefault();
+      event.stopPropagation();
+      var origin = event.currentTarget && event.currentTarget.closest ? event.currentTarget.closest('[role="row"],article') : null;
+      var control = event.currentTarget;
+      confirmRestart(control).then(function (confirmed) {
+        if (confirmed) startRestart(origin);
+      });
+    }
+
     function lockBodyScroll() {
       if (!doc.body) return;
       if (overflowOwner === doc.body) {
@@ -626,6 +1086,7 @@
       if (!doc.body) return false;
       if (isMounted()) {
         bindHostThemeControl();
+        ensureRestartControls();
         publishRuntime();
         return true;
       }
@@ -655,6 +1116,7 @@
         }
       });
       bindHostThemeControl();
+      ensureRestartControls();
       publishRuntime();
       refreshControls();
       if (openRequested) revealStage();
@@ -670,13 +1132,14 @@
         ensureThemeStyle();
         ensureMounted();
         bindHostThemeControl();
+        ensureRestartControls();
       });
     }
 
     function watchHostDOM() {
       if (observer || !win.MutationObserver || !root) return;
       observer = new win.MutationObserver(function () {
-        if (!isMounted() || !doc.getElementById(styleID) || !hostThemeControl || !hostThemeControl.isConnected) scheduleEnsure();
+        scheduleEnsure();
       });
       observer.observe(root, { childList: true, subtree: true });
     }
@@ -702,7 +1165,9 @@
           overflowLocked: Boolean(overflowOwner),
           stageCount: isMounted() ? shadow.querySelectorAll('.ts-stage').length : 0,
           hostControlCount: doc.querySelectorAll('[data-cpamp-theme-studio-trigger="true"]').length,
-          hostControlBound: Boolean(hostThemeControl && hostThemeControl.isConnected)
+          hostControlBound: Boolean(hostThemeControl && hostThemeControl.isConnected),
+          restartControlCount: doc.querySelectorAll('[data-cpamp-theme-studio-restart="true"]').length,
+          restartBusy: restartBusy
         };
       }
     };

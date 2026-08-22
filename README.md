@@ -1,6 +1,6 @@
 # CPAMP Theme Studio
 
-[简体中文](README.zh-CN.md) · [Deployment](docs/DEPLOYMENT.md) · [Agent runbook](docs/AGENT_DEPLOYMENT.md) · [v0.1.3 notes](docs/RELEASE_NOTES_v0.1.3.md)
+[简体中文](README.zh-CN.md) · [Deployment](docs/DEPLOYMENT.md) · [Agent runbook](docs/AGENT_DEPLOYMENT.md) · [v0.1.4 notes](docs/RELEASE_NOTES_v0.1.4.md)
 
 CPAMP Theme Studio is a frontend theme extension delivered through the CPAMP Plugin Store. It adds a persistent visual theme editor to a writable [CPA Manager Plus](https://github.com/seakee/CPA-Manager-Plus) panel without an upstream pull request or a long-lived CPAMP fork.
 
@@ -34,6 +34,7 @@ Future CPA and CPAMP versions are expected to work while their plugin ABI and si
 - Simplified Chinese, Traditional Chinese, English, and Russian UI.
 - Shadow DOM isolation, keyboard focus handling, reduced-motion support, and mobile layout.
 - Reuses CPAMP's native top-right Theme control as the single entry point; no floating or sidebar duplicate.
+- Adds a confirmed `Restart CPA` control to the installed-plugin row and Plugin Store card, so a hot install or upgrade can finish without leaving the retired watcher alive.
 - Idempotent runtime recovery and reinjection after SPA or upstream panel updates.
 - Deterministic cleanup on hot disable; normal process-shutdown cleanup is best effort.
 
@@ -63,8 +64,8 @@ After saving and reloading the configuration:
 
 1. Open CPAMP, then Plugins → Plugin Store.
 2. Confirm that the sources include `raw.githubusercontent.com` and search for `CPAMP Theme Studio`.
-3. Choose Latest or `0.1.3` and install it. CPAMP/CPA downloads the matching pinned Release archive, verifies the SHA-256 carried by the store registry, writes a versioned library under `<dir>/<goos>/<goarch>/`, and creates the enabled plugin configuration.
-4. Restart the effective CPA service after every install or version upgrade, then confirm `registered` and `effective enabled` on Installed Plugins. Do not rely on hot reload alone: a retired plugin version can keep its panel watcher alive until the process exits.
+3. Choose Latest or `0.1.4` and install it. CPAMP/CPA downloads the matching pinned Release archive, verifies the SHA-256 carried by the store registry, writes a versioned library under `<dir>/<goos>/<goarch>/`, and creates the enabled plugin configuration.
+4. After an install or upgrade, click `Restart CPA` on either the Theme Studio store card or its Installed Plugins row and confirm. The control waits for a new CPA process and a fresh panel injection before refreshing. If automatic restart is unavailable for the current service manager, restart the effective CPA service manually. Do not rely on hot reload alone: a retired plugin version can keep its panel watcher alive until the process exits.
 5. Return to the CPAMP dashboard and click the existing Theme control in the top-right action row. The plugin replaces that control's behavior without adding another floating button.
 
 The hidden read-only resource used by the injected loader and bundled fonts is:
@@ -98,6 +99,9 @@ Keep management access bound to localhost or protect it with a trusted reverse p
 | `panel_path` | empty | Explicit `management.html` file or directory; relative paths use CPA's working directory |
 | `host_config_path` | auto-detected | CPA `config.yaml`, used to notice a hot disable and clean up immediately |
 | `watch_seconds` | `3` | Panel check interval, clamped to 1–300 seconds |
+| `restart_mode` | `auto` | `auto`, `disabled`, `systemd`, or `self-exit`; see the deployment guide before changing it |
+| `restart_service` | empty | Optional systemd unit override; accepted only when its `MainPID` is the current CPA PID |
+| `restart_request` | internal | One-time value written by the authenticated card control; do not edit it manually |
 
 When `panel_path` is empty, the plugin checks `CPAMP_THEME_PANEL_PATH`, `MANAGEMENT_STATIC_PATH`, and `PANEL_PATH`, followed by `static/management.html` and `management.html` near CPA's working directory and executable.
 
@@ -120,15 +124,15 @@ Requirements: Go 1.26+, a native C compiler for CGO, and optionally Node.js 24+ 
 Windows PowerShell:
 
 ```powershell
-.\scripts\build.ps1 -Version 0.1.3-dev
-.\scripts\package.ps1 -Version 0.1.3-dev
+.\scripts\build.ps1 -Version 0.1.4-dev
+.\scripts\package.ps1 -Version 0.1.4-dev
 ```
 
 Linux or macOS:
 
 ```bash
-./scripts/build.sh 0.1.3-dev
-./scripts/package.sh 0.1.3-dev
+./scripts/build.sh 0.1.4-dev
+./scripts/package.sh 0.1.4-dev
 ```
 
 Generated libraries and archives are placed under `dist/` and are not committed.
@@ -139,9 +143,10 @@ Generated libraries and archives are placed under `dist/` and are not committed.
 2. The plugin registers one hidden read-only resource route for its loader and fonts; it publishes no CPAMP sidebar menu.
 3. The injector finds a trusted writable `management.html` and inserts one unique start/end marker block before `</head>`.
 4. The loader mounts a Shadow DOM editor and applies preferences through CPAMP's CSS variables and compatible local theme stores.
-5. The watcher restores the marker after an upstream update. Hot-disable removes it deterministically; process-shutdown cleanup is best effort because CPA may terminate before an asynchronous native-plugin shutdown finishes.
+5. The restart control writes a random one-time request through CPAMP's authenticated configuration-save UI. On Linux/systemd the plugin validates that the selected unit owns the current CPA PID; explicit `self-exit` requires an external supervisor.
+6. The watcher restores the marker after an upstream update. Hot-disable removes it deterministically; process-shutdown cleanup is best effort because CPA may terminate before an asynchronous native-plugin shutdown finishes.
 
-The plugin does not intercept CPA requests, handle process signals, proxy credentials, or expose arbitrary files.
+The plugin does not intercept CPA requests, read or proxy credentials, expose arbitrary files, or publish an unauthenticated restart endpoint.
 
 Before stopping CPA for an upgrade, rollback, or uninstall, hot-disable this plugin and wait for the marker block to disappear. If CPA has already exited and the markers remain, restore the panel backup or remove only this plugin's marked block as described in the deployment guide.
 
@@ -160,6 +165,8 @@ Before stopping CPA for an upgrade, rollback, or uninstall, hot-disable this plu
 - Palette persistence across reload and 390×844 responsive layout
 - Panel overwrite followed by automatic reinjection
 - Hot disable followed by exact restoration of the original CPAMP SHA-256
+- Installed-row and store-card restart controls, safe cancellation, one-time request persistence, supervised process replacement, loader recovery, and automatic refresh
+- Restart confirmation focus handling, 44 px controls, light/dark danger styling, reduced motion, and a 375×812 layout without horizontal overflow
 
 ## License and provenance
 

@@ -65,10 +65,10 @@ An absolute `plugins.dir` is strongly recommended. CPA v7.2.138 writes a store i
 Then use CPAMP:
 
 1. Open Plugins → Plugin Store and confirm the custom source has no error.
-2. Search for `CPAMP Theme Studio` and choose Latest or a specific version such as `0.1.3`.
+2. Search for `CPAMP Theme Studio` and choose Latest or a specific version such as `0.1.4`.
 3. Complete the third-party confirmation and install it.
 4. Record the returned version and actual `path`; never assume a relative directory is beside the CPA executable.
-5. Restart the effective CPA service after every install or upgrade. Theme Studio's panel watcher is process-local; CPA hot reload can leave the retired version alive until process exit, causing old and new loader cache keys to alternate.
+5. After every install or upgrade, click `Restart CPA` on the Theme Studio store card or Installed Plugins row and confirm. The control waits for process replacement and loader reinjection before refreshing. If it reports that automatic restart is unavailable, restart the effective CPA service manually. Theme Studio's panel watcher is process-local; CPA hot reload can leave the retired version alive until process exit, causing old and new loader cache keys to alternate.
 6. Confirm `registered=true` and `effective_enabled=true` under Installed Plugins, then return to the dashboard and click CPAMP's existing top-right Theme control. No floating or sidebar Theme Studio entry is expected.
 
 The store path passes only when discovery, pinned SHA-256 verification, installation, target path, registration, and the HTTP 200 resource check all succeed. If store installation fails, do not manually copy a library and report a successful store deployment. Capture the CPAMP response and CPA logs first; use the next section only as an explicitly reported manual fallback.
@@ -106,7 +106,7 @@ Stop CPA, then copy the library into the matching platform directory:
 <CPA_HOME>/plugins/<goos>/<goarch>/cpamp-theme-studio.<dll|so|dylib>
 ```
 
-Versioned names such as `cpamp-theme-studio-v0.1.3.dll` are also accepted by CPA. Do not keep multiple unversioned copies.
+Versioned names such as `cpamp-theme-studio-v0.1.4.dll` are also accepted by CPA. Do not keep multiple unversioned copies.
 
 ## 5. Build from source
 
@@ -117,7 +117,7 @@ git clone https://github.com/Cec1c/cpamp-theme-studio.git
 cd cpamp-theme-studio
 go test ./...
 node --check assets/loader.js
-./scripts/package.sh 0.1.3-dev
+./scripts/package.sh 0.1.4-dev
 ```
 
 Windows:
@@ -127,7 +127,7 @@ git clone https://github.com/Cec1c/cpamp-theme-studio.git
 Set-Location .\cpamp-theme-studio
 go test ./...
 node --check .\assets\loader.js
-.\scripts\package.ps1 -Version 0.1.3-dev
+.\scripts\package.ps1 -Version 0.1.4-dev
 ```
 
 The build requires Go 1.26+ and a native C compiler. Build on the same OS/architecture as the target because the plugin uses CGO `c-shared` mode.
@@ -148,6 +148,8 @@ plugins:
       panel_path: ""
       host_config_path: ""
       watch_seconds: 3
+      restart_mode: auto
+      restart_service: ""
 ```
 
 For the standard CPA Lightweight Panel, leave `panel_path` empty if the panel is at `<CPA_HOME>/static/management.html`.
@@ -160,6 +162,19 @@ If CPA is started with an unusual working directory or wrapper, set absolute pat
 ```
 
 On Windows, quote paths and use either forward slashes or escaped backslashes.
+
+### Safe restart control
+
+The plugin card does not call a public restart API and does not read the Management Key. It generates a random one-time `restart_request`, opens CPAMP's native Edit configuration drawer, and saves that value through the already authenticated management session. The plugin then schedules the selected restart strategy after the save response has had time to return.
+
+| `restart_mode` | Behavior | Safe use |
+| --- | --- | --- |
+| `auto` | Default. On Linux, discover and validate the current systemd unit | The unit is accepted only when its `MainPID` equals the current CPA PID |
+| `systemd` | Use systemd, optionally with `restart_service` | The configured unit name is syntax-checked and still must pass the same `MainPID` check |
+| `self-exit` | Exit the CPA process with code `75` | Use only when Docker or another external supervisor is confirmed to restart that exact process |
+| `disabled` | Disable automatic restart | Use for manual processes or when no safe supervisor is available |
+
+`restart_request` is an internal one-time field displayed by CPA's generic plugin configuration form. Do not prefill, reuse, or edit it manually. On Windows, macOS, containers without systemd, and wrapper-based services, `auto` can correctly report unavailable. Configure `self-exit` only after verifying the supervisor's restart policy; without a supervisor it simply stops CPA.
 
 ## 7. Manager Server with external PANEL_PATH
 
@@ -191,6 +206,7 @@ curl -fsS http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio >/
 curl -fsS 'http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio?asset=loader' >/dev/null
 curl -fsS 'http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio?asset=font-regular' >/dev/null
 curl -fsS 'http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio?asset=font-semibold' >/dev/null
+curl -fsS 'http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio?asset=restart-status' >/dev/null
 ```
 
 Then open `management.html` in a browser and verify:
@@ -202,6 +218,8 @@ Then open `management.html` in a browser and verify:
 - Browser-computed typography starts with `JetBrains Mono`; both bundled font weights load successfully.
 - Each cycle leaves exactly one mount, host Theme control, and stage, and restores `body` overflow after closing.
 - Browser developer tools show no Theme Studio errors.
+- The Theme Studio row and store card each expose one `Restart CPA` control. Canceling the confirmation leaves CPA and its configuration unchanged.
+- When automatic restart is configured, confirming changes the opaque `process_instance`, restores the loader, and refreshes to a usable login/dashboard. Never verify by PID or resource status alone; check the real panel too.
 - The file contains exactly one start marker and one end marker.
 
 ```text
@@ -220,7 +238,7 @@ Do not use the marker alone as the health check; registration, resource response
 5. Start CPA and repeat all verification checks.
 6. Confirm the current CPAMP panel still has exactly one marker block.
 
-When upgrading to `0.1.3`, restart the effective CPA process first and then refresh the panel. Confirm that the injected loader URL ends in `v=0.1.3`; existing browser preferences are retained, the native top-right Theme control remains the single entry point, and the Typography and Density sections are reachable inside the scrolling editor.
+When upgrading to `0.1.4`, use the new card control to restart the effective CPA process, or restart it manually if the configured mode is unavailable. Confirm that the injected loader URL ends in `v=0.1.4`; existing browser preferences are retained, the native top-right Theme control remains the single editor entry point, and the Typography and Density sections remain reachable inside the scrolling editor.
 
 Panel updates do not require reinstalling the plugin. If CPAMP replaces `management.html`, the watcher should restore the loader within `watch_seconds`.
 

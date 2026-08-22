@@ -1,6 +1,6 @@
 # CPAMP 主题工作室
 
-[English](README.md) · [部署文档](docs/DEPLOYMENT.zh-CN.md) · [Agent 部署手册](docs/AGENT_DEPLOYMENT.md) · [v0.1.3 发布说明](docs/RELEASE_NOTES_v0.1.3.md)
+[English](README.md) · [部署文档](docs/DEPLOYMENT.zh-CN.md) · [Agent 部署手册](docs/AGENT_DEPLOYMENT.md) · [v0.1.4 发布说明](docs/RELEASE_NOTES_v0.1.4.md)
 
 CPAMP 主题工作室是一个通过 CPAMP 插件市场交付的前端主题扩展，为可写的 [CPA Manager Plus](https://github.com/seakee/CPA-Manager-Plus) 面板增加可持久化的视觉主题编辑器。功能不再依赖 CPAMP 上游 PR，也不需要长期维护 CPAMP fork。
 
@@ -34,6 +34,7 @@ CPAMP 主题工作室是一个通过 CPAMP 插件市场交付的前端主题扩�
 - 简体中文、繁体中文、英语、俄语。
 - Shadow DOM 隔离、键盘焦点处理、减少动画支持和移动端布局。
 - 复用 CPAMP 右上角原生“主题”控件作为唯一入口，不再生成悬浮按钮或插件页/侧栏菜单。
+- 在“已安装插件”行和插件商店卡片提供带二次确认的“重启 CPA”控件，让热安装/升级能够结束旧版本 watcher。
 - SPA 重入和 CPAMP 更新覆盖面板后的幂等运行时恢复与重注入。
 - 热停用时确定性清理；进程正常关闭时仅尽力清理。
 
@@ -63,8 +64,8 @@ plugins:
 
 1. 打开 CPAMP 的“插件”→“插件商店”。
 2. 确认来源中出现 `raw.githubusercontent.com`，搜索 `CPAMP Theme Studio`。
-3. 选择 Latest 或 `0.1.3` 并安装；CPAMP/CPA 会下载清单固定的平台 Release 压缩包，校验商店清单携带的 SHA-256，把带版本号的动态库写到 `<dir>/<goos>/<goarch>/`，并创建启用配置。
-4. 每次安装或版本升级后都要重启实际运行的 CPA 服务；然后在“已安装插件”确认 `registered` 与 `effective enabled`。不要只依赖热重载：旧插件版本的面板 watcher 可能持续到进程退出。
+3. 选择 Latest 或 `0.1.4` 并安装；CPAMP/CPA 会下载清单固定的平台 Release 压缩包，校验商店清单携带的 SHA-256，把带版本号的动态库写到 `<dir>/<goos>/<goarch>/`，并创建启用配置。
+4. 安装或升级后，点击 Theme Studio 商店卡片或“已安装插件”行中的“重启 CPA”并确认。控件会等待新 CPA 进程和新面板注入恢复后自动刷新；若当前服务管理方式不支持安全自动重启，则手工重启实际 CPA 服务。不要只依赖热重载：旧插件版本的面板 watcher 可能持续到进程退出。
 5. 回到 CPAMP 仪表盘，点击右上角操作区原有的“主题”控件；插件会替换该控件的点击行为，不再添加悬浮按钮。
 
 注入 loader 和内置字体使用的隐藏只读资源为：
@@ -98,6 +99,9 @@ remote-management:
 | `panel_path` | 空 | 明确指定 `management.html` 或其目录；相对路径以 CPA 工作目录为准 |
 | `host_config_path` | 自动发现 | CPA `config.yaml`，用于发现热停用并立即清理 |
 | `watch_seconds` | `3` | 面板检查周期，限制在 1–300 秒 |
+| `restart_mode` | `auto` | `auto`、`disabled`、`systemd` 或 `self-exit`；修改前先阅读部署文档 |
+| `restart_service` | 空 | 可选 systemd 服务覆盖；只有其 `MainPID` 等于当前 CPA PID 时才接受 |
+| `restart_request` | 内部字段 | 已认证卡片控件写入的一次性值；不要手工修改 |
 
 `panel_path` 为空时，插件会依次检查 `CPAMP_THEME_PANEL_PATH`、`MANAGEMENT_STATIC_PATH`、`PANEL_PATH`，以及 CPA 工作目录和可执行文件附近的 `static/management.html`、`management.html`。
 
@@ -120,15 +124,15 @@ plugins:
 Windows PowerShell：
 
 ```powershell
-.\scripts\build.ps1 -Version 0.1.3-dev
-.\scripts\package.ps1 -Version 0.1.3-dev
+.\scripts\build.ps1 -Version 0.1.4-dev
+.\scripts\package.ps1 -Version 0.1.4-dev
 ```
 
 Linux 或 macOS：
 
 ```bash
-./scripts/build.sh 0.1.3-dev
-./scripts/package.sh 0.1.3-dev
+./scripts/build.sh 0.1.4-dev
+./scripts/package.sh 0.1.4-dev
 ```
 
 动态库和压缩包输出到 `dist/`，不会提交进 Git。
@@ -139,9 +143,10 @@ Linux 或 macOS：
 2. 插件注册一个供 loader 和字体使用的隐藏只读资源路由，不发布 CPAMP 侧栏菜单。
 3. 注入器寻找可信的可写 `management.html`，在 `</head>` 前加入唯一 start/end 标记块。
 4. loader 用 Shadow DOM 挂载编辑器，通过 CPAMP CSS 变量和兼容的本地主题存储应用设置。
-5. 上游更新覆盖文件后自动恢复标记；热停用会确定性移除标记。进程关闭时，CPA 可能在原生插件的异步 shutdown 完成前退出，因此清理仅为 best effort。
+5. 重启控件通过 CPAMP 已认证的配置保存界面写入随机一次性请求；Linux/systemd 会校验所选服务确实拥有当前 CPA PID，显式 `self-exit` 则要求外部 supervisor。
+6. 上游更新覆盖文件后自动恢复标记；热停用会确定性移除标记。进程关闭时，CPA 可能在原生插件的异步 shutdown 完成前退出，因此清理仅为 best effort。
 
-插件不会拦截 CPA 请求、接管进程信号、代理凭证或公开任意文件。
+插件不会拦截 CPA 请求、读取或代理凭证、公开任意文件，也不会发布未认证的重启接口。
 
 升级、回滚或卸载前，应先热停用本插件并等待标记消失，再停止 CPA。若 CPA 已退出但标记仍在，请按部署文档恢复面板备份，或只删除本插件的标记块。
 
@@ -160,6 +165,8 @@ Linux 或 macOS：
 - 配色刷新持久化和 390×844 响应式布局
 - 面板被官方文件覆盖后的自动重注入
 - 热停用后精确恢复原始 CPAMP SHA-256
+- “已安装插件”行和商店卡片的重启控件、安全取消、一次性请求持久化、supervisor 拉起新进程、loader 恢复与自动刷新
+- 二次确认焦点处理、44 px 控件、深浅色危险语义、减少动画，以及 375×812 下无横向溢出
 
 ## 许可与来源
 

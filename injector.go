@@ -17,6 +17,9 @@ type injectorConfig struct {
 	HostConfigPath string
 	AutoInject     bool
 	WatchPeriod    time.Duration
+	RestartMode    string
+	RestartService string
+	RestartRequest string
 }
 
 type injectorStatus struct {
@@ -37,7 +40,7 @@ var injectorRuntime struct {
 }
 
 func parseInjectorConfig(raw []byte) (injectorConfig, error) {
-	cfg := injectorConfig{AutoInject: true, WatchPeriod: 3 * time.Second}
+	cfg := injectorConfig{AutoInject: true, WatchPeriod: 3 * time.Second, RestartMode: restartModeAuto}
 	if len(strings.TrimSpace(string(raw))) == 0 {
 		return cfg, nil
 	}
@@ -78,6 +81,33 @@ func parseInjectorConfig(raw []byte) (injectorConfig, error) {
 			seconds = 300
 		}
 		cfg.WatchPeriod = time.Duration(seconds) * time.Second
+	}
+	if value, found := configValue(values, "restart_mode", "restart-mode"); found {
+		parsed, ok := value.(string)
+		if !ok {
+			return injectorConfig{}, fmt.Errorf("restart_mode must be a string")
+		}
+		cfg.RestartMode = strings.ToLower(strings.TrimSpace(parsed))
+		if !validRestartMode(cfg.RestartMode) {
+			return injectorConfig{}, fmt.Errorf("restart_mode must be one of auto, disabled, systemd, or self-exit")
+		}
+	}
+	if value, found := configValue(values, "restart_service", "restart-service"); found {
+		parsed, ok := value.(string)
+		if !ok {
+			return injectorConfig{}, fmt.Errorf("restart_service must be a string")
+		}
+		cfg.RestartService = strings.TrimSpace(parsed)
+	}
+	if value, found := configValue(values, "restart_request", "restart-request"); found {
+		parsed, ok := value.(string)
+		if !ok {
+			return injectorConfig{}, fmt.Errorf("restart_request must be a string")
+		}
+		cfg.RestartRequest = strings.TrimSpace(parsed)
+		if len(cfg.RestartRequest) > maxRestartRequestLength {
+			return injectorConfig{}, fmt.Errorf("restart_request must not exceed %d characters", maxRestartRequestLength)
+		}
 	}
 	return cfg, nil
 }

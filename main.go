@@ -208,6 +208,7 @@ func handleMethod(method string, request []byte) ([]byte, error) {
 			return nil, errConfig
 		}
 		configureInjector(cfg)
+		configureRestart(cfg, method == methodPluginReconfigure)
 		return okEnvelope(pluginRegistration())
 	case methodManagementRegister:
 		return okEnvelope(managementRegistration{Resources: []managementResource{{
@@ -238,6 +239,9 @@ func pluginRegistration() registration {
 				{Name: "panel_path", Type: "string", Description: "Optional management.html file or directory. Required when CPAMP Manager Server uses PANEL_PATH."},
 				{Name: "host_config_path", Type: "string", Description: "Optional CPA config.yaml used to remove the loader promptly when the plugin is disabled."},
 				{Name: "watch_seconds", Type: "integer", Description: "Panel update check interval in seconds (1-300, default 3)."},
+				{Name: "restart_mode", Type: "enum", EnumValues: []string{restartModeAuto, restartModeDisabled, restartModeSystemd, restartModeSelfExit}, Description: "How the authenticated card control restarts CPA. auto validates the current systemd service; self-exit requires an external supervisor."},
+				{Name: "restart_service", Type: "string", Description: "Optional systemd unit override. The unit MainPID must match the current CPA process."},
+				{Name: "restart_request", Type: "string", Description: "Internal one-time request written by the CPAMP plugin card control. Do not edit manually."},
 			},
 		},
 		Capabilities: registrationCapabilities{ManagementAPI: true},
@@ -277,6 +281,17 @@ func handleManagement(raw []byte) ([]byte, error) {
 		return okEnvelope(immutableAssetResponse(method, "font/woff2", jetBrainsMonoRegular))
 	case "font-semibold":
 		return okEnvelope(immutableAssetResponse(method, "font/woff2", jetBrainsMonoSemiBold))
+	case "restart-status":
+		body, errMarshal := json.Marshal(snapshotRestartStatus())
+		if errMarshal != nil {
+			return nil, fmt.Errorf("encode restart status: %w", errMarshal)
+		}
+		if method == http.MethodHead {
+			body = nil
+		}
+		return okEnvelope(resourceResponse(http.StatusOK, "application/json; charset=utf-8", body, map[string]string{
+			"Cache-Control": "no-store",
+		}))
 	case "":
 		body := renderStudioLanding(snapshotInjectorStatus())
 		if method == http.MethodHead {

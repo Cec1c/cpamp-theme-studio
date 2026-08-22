@@ -65,10 +65,10 @@ plugins:
 随后在 CPAMP 中执行：
 
 1. 打开“插件”→“插件商店”，确认自定义来源没有错误。
-2. 搜索 `CPAMP Theme Studio`，选择 Latest 或 `0.1.3` 这类明确版本。
+2. 搜索 `CPAMP Theme Studio`，选择 Latest 或 `0.1.4` 这类明确版本。
 3. 完成第三方插件确认并点击安装。
 4. 在安装结果中记录版本与实际 `path`，不要假定相对目录落在 CPA 可执行文件旁。
-5. 每次安装或升级后都要重启实际 CPA 服务。主题工作室的面板 watcher 属于进程内状态；CPA 热重载可能让退役版本存活到进程退出，导致新旧 loader 缓存版本交替写入。
+5. 每次安装或升级后，点击 Theme Studio 商店卡片或“已安装插件”行中的“重启 CPA”并确认。控件会等待进程替换和 loader 恢复注入后自动刷新；若提示当前部署无法安全自动重启，则手工重启实际 CPA 服务。主题工作室的面板 watcher 属于进程内状态；CPA 热重载可能让退役版本存活到进程退出，导致新旧 loader 缓存版本交替写入。
 6. 在“已安装插件”中确认 `registered=true`、`effective_enabled=true`，再回到仪表盘点击 CPAMP 右上角原有的“主题”控件；此版本不会出现悬浮按钮或 Theme Studio 侧栏项。
 
 只有同时满足“商店可发现、固定 SHA-256 校验通过、安装返回成功、实际文件路径正确、插件已注册、页面资源 200”才算市场链路成功。若市场安装失败，不要改用手工复制后宣称市场部署成功；先记录 CPAMP 响应与 CPA 日志，再按下一节做明确标注的手工回退。
@@ -106,7 +106,7 @@ unzip cpamp-theme-studio_<version>_<goos>_<goarch>.zip
 <CPA_HOME>/plugins/<goos>/<goarch>/cpamp-theme-studio.<dll|so|dylib>
 ```
 
-CPA 也接受 `cpamp-theme-studio-v0.1.3.dll` 这类带版本名。不要保留多个无版本文件副本。
+CPA 也接受 `cpamp-theme-studio-v0.1.4.dll` 这类带版本名。不要保留多个无版本文件副本。
 
 ## 5. 从源码构建
 
@@ -119,7 +119,7 @@ git clone https://github.com/Cec1c/cpamp-theme-studio.git
 Set-Location .\cpamp-theme-studio
 go test ./...
 node --check .\assets\loader.js
-.\scripts\package.ps1 -Version 0.1.3-dev
+.\scripts\package.ps1 -Version 0.1.4-dev
 ```
 
 Linux/macOS：
@@ -129,7 +129,7 @@ git clone https://github.com/Cec1c/cpamp-theme-studio.git
 cd cpamp-theme-studio
 go test ./...
 node --check assets/loader.js
-./scripts/package.sh 0.1.3-dev
+./scripts/package.sh 0.1.4-dev
 ```
 
 需要 Go 1.26+ 和本机 C 编译器。插件使用 CGO `c-shared`，应在与目标相同的系统/架构上构建。
@@ -150,6 +150,8 @@ plugins:
       panel_path: ""
       host_config_path: ""
       watch_seconds: 3
+      restart_mode: auto
+      restart_service: ""
 ```
 
 标准 CPA 轻量面板位于 `<CPA_HOME>/static/management.html` 时，`panel_path` 可以留空。
@@ -162,6 +164,19 @@ CPA 由特殊启动器启动或工作目录不固定时，请使用绝对路径�
 ```
 
 Windows 路径应加引号，并使用正斜杠或转义后的反斜杠。
+
+### 安全重启控件
+
+插件卡片不会调用公开重启 API，也不会读取 Management Key。它生成随机的一次性 `restart_request`，打开 CPAMP 原生“编辑配置”抽屉，再通过当前已认证的管理会话保存该值；插件会留出保存响应返回的时间后再安排重启。
+
+| `restart_mode` | 行为 | 安全使用条件 |
+| --- | --- | --- |
+| `auto` | 默认值；在 Linux 自动发现并校验当前 systemd 服务 | 只有该服务的 `MainPID` 等于当前 CPA PID 才接受 |
+| `systemd` | 使用 systemd，可配合 `restart_service` | 服务名先做格式校验，且仍必须通过相同的 `MainPID` 校验 |
+| `self-exit` | 让 CPA 以退出码 `75` 结束 | 只在 Docker 或其他外部 supervisor 已确认会拉起该 CPA 进程时使用 |
+| `disabled` | 禁用自动重启 | 适用于手工进程或没有安全 supervisor 的部署 |
+
+`restart_request` 是 CPA 通用插件配置表单会显示的内部一次性字段，不要预填、复用或手工修改。在 Windows、macOS、无 systemd 的容器或由包装器启动的服务中，`auto` 提示不可用是正确结果。只有验证 supervisor 的重启策略后才能配置 `self-exit`；没有 supervisor 时，它只会停止 CPA。
 
 ## 7. 外置 PANEL_PATH 的 Manager Server
 
@@ -193,6 +208,7 @@ curl -fsS http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio >/
 curl -fsS 'http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio?asset=loader' >/dev/null
 curl -fsS 'http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio?asset=font-regular' >/dev/null
 curl -fsS 'http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio?asset=font-semibold' >/dev/null
+curl -fsS 'http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio?asset=restart-status' >/dev/null
 ```
 
 再用浏览器确认：
@@ -204,6 +220,8 @@ curl -fsS 'http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio?a
 - 浏览器计算字体以 `JetBrains Mono` 开头，两个内置字重都加载成功。
 - 每轮都只有一个 mount、宿主“主题”控件和 stage，关闭后 `body` overflow 恢复。
 - 浏览器开发者工具没有主题插件报错。
+- Theme Studio 的已安装行和商店卡片各出现一个“重启 CPA”控件；取消二次确认不会改变 CPA 进程或配置。
+- 已配置自动重启时，确认后匿名 `process_instance` 会变化，loader 恢复后页面自动刷新到可用登录页/主页。不能只看 PID 或资源状态，还要检查真实面板。
 - 文件中 start/end 标记各且仅有一个。
 
 ```text
@@ -222,7 +240,7 @@ curl -fsS 'http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio?a
 5. 启动 CPA，重新执行全部验证。
 6. 确认当前 CPAMP 面板仍只有一个标记块。
 
-升级到 `0.1.3` 时，先重启实际 CPA 进程，再刷新面板，并确认注入的 loader URL 以 `v=0.1.3` 结尾。浏览器主题偏好继续保留，CPAMP 右上角原生“主题”控件仍是唯一入口，且“字体”和“界面密度”均可在可滚动编辑器中访问。
+升级到 `0.1.4` 时，使用新卡片控件重启实际 CPA 进程；若当前模式不可用则手工重启。确认注入的 loader URL 以 `v=0.1.4` 结尾。浏览器主题偏好继续保留，CPAMP 右上角原生“主题”控件仍是唯一编辑器入口，且“字体”和“界面密度”仍可在可滚动编辑器中访问。
 
 CPAMP 更新面板不需要重装插件。`management.html` 被覆盖后，watcher 应在 `watch_seconds` 内恢复 loader。
 

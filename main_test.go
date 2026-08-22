@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,7 +11,7 @@ import (
 )
 
 func TestParseInjectorConfig(t *testing.T) {
-	cfg, errConfig := parseInjectorConfig([]byte("auto_inject: true\npanel_path: 'D:\\panel\\management.html'\nhost_config_path: 'D:\\cpa\\config.yaml'\nwatch_seconds: 999\n"))
+	cfg, errConfig := parseInjectorConfig([]byte("auto_inject: true\npanel_path: 'D:\\panel\\management.html'\nhost_config_path: 'D:\\cpa\\config.yaml'\nwatch_seconds: 999\nrestart_mode: systemd\nrestart_service: cli-proxy-api.service\nrestart_request: request-1\n"))
 	if errConfig != nil {
 		t.Fatal(errConfig)
 	}
@@ -22,6 +23,9 @@ func TestParseInjectorConfig(t *testing.T) {
 	}
 	if cfg.WatchPeriod != 300*time.Second {
 		t.Fatalf("watch period = %s, want 300s cap", cfg.WatchPeriod)
+	}
+	if cfg.RestartMode != restartModeSystemd || cfg.RestartService != "cli-proxy-api.service" || cfg.RestartRequest != "request-1" {
+		t.Fatalf("restart config = %#v", cfg)
 	}
 }
 
@@ -119,7 +123,7 @@ func TestParseInjectorConfigDefaults(t *testing.T) {
 	if errConfig != nil {
 		t.Fatal(errConfig)
 	}
-	if !cfg.AutoInject || cfg.WatchPeriod != 3*time.Second {
+	if !cfg.AutoInject || cfg.WatchPeriod != 3*time.Second || cfg.RestartMode != restartModeAuto {
 		t.Fatalf("defaults = %#v", cfg)
 	}
 }
@@ -127,6 +131,12 @@ func TestParseInjectorConfigDefaults(t *testing.T) {
 func TestParseInjectorConfigRejectsWrongTypes(t *testing.T) {
 	if _, errConfig := parseInjectorConfig([]byte("auto_inject: yes-please\n")); errConfig == nil {
 		t.Fatal("expected invalid boolean to fail")
+	}
+	if _, errConfig := parseInjectorConfig([]byte("restart_mode: unsafe\n")); errConfig == nil {
+		t.Fatal("expected invalid restart mode to fail")
+	}
+	if _, errConfig := parseInjectorConfig([]byte("restart_request: '" + strings.Repeat("x", maxRestartRequestLength+1) + "'\n")); errConfig == nil {
+		t.Fatal("expected oversized restart request to fail")
 	}
 }
 
@@ -196,6 +206,38 @@ func TestManagementServesBundledJetBrainsMono(t *testing.T) {
 				t.Fatalf("font cache headers = %#v", response.Headers)
 			}
 		})
+	}
+}
+
+func TestManagementServesReadOnlyRestartStatus(t *testing.T) {
+	resetRestartRuntimeForTest()
+	t.Cleanup(resetRestartRuntimeForTest)
+	request := managementRequest{Method: "GET", Query: map[string][]string{"asset": {"restart-status"}}}
+	rawRequest, _ := json.Marshal(request)
+	raw, errHandle := handleManagement(rawRequest)
+	if errHandle != nil {
+		t.Fatal(errHandle)
+	}
+	var env envelope
+	if errUnmarshal := json.Unmarshal(raw, &env); errUnmarshal != nil {
+		t.Fatal(errUnmarshal)
+	}
+	var response managementResponse
+	if errUnmarshal := json.Unmarshal(env.Result, &response); errUnmarshal != nil {
+		t.Fatal(errUnmarshal)
+	}
+	if response.StatusCode != http.StatusOK || response.Headers.Get("Content-Type") != "application/json; charset=utf-8" {
+		t.Fatalf("response = %#v", response)
+	}
+	if response.Headers.Get("Cache-Control") != "no-store" {
+		t.Fatalf("cache control = %q", response.Headers.Get("Cache-Control"))
+	}
+	var status restartStatus
+	if errUnmarshal := json.Unmarshal(response.Body, &status); errUnmarshal != nil {
+		t.Fatal(errUnmarshal)
+	}
+	if status.ProcessInstance == "" {
+		t.Fatal("restart status is missing its process instance")
 	}
 }
 
@@ -285,6 +327,15 @@ func TestLoaderRuntimeContract(t *testing.T) {
 		"stopImmediatePropagation",
 		"data-cpamp-theme-studio-trigger",
 		"doc.querySelectorAll('button')",
+		"data-cpamp-theme-studio-restart",
+		"plugin-field-restart_request",
+		"restart-status",
+		"role', 'alertdialog",
+		"restartConfirmTitle",
+		"restartCancel",
+		"waitForPanelLoader(12000)",
+		"waitForRestartRequest(requestID, processInstance)",
+		"cts-restart-feedback",
 	} {
 		if !strings.Contains(loader, required) {
 			t.Fatalf("loader is missing runtime contract %q", required)
@@ -298,5 +349,14 @@ func TestLoaderRuntimeContract(t *testing.T) {
 	}
 	if strings.Contains(loader, "ts-launcher") {
 		t.Fatal("loader must reuse CPAMP's native top-bar theme control instead of publishing a floating launcher")
+	}
+	if strings.Contains(loader, "managementKey") || strings.Contains(loader, "Authorization") {
+		t.Fatal("loader must use CPAMP's authenticated config-save flow instead of reading or capturing the management key")
+	}
+	if strings.Contains(loader, "win.confirm(") {
+		t.Fatal("loader must use its accessible restart confirmation dialog instead of a browser-native confirm")
+	}
+	if strings.Contains(loader, "win.alert(") {
+		t.Fatal("loader must report restart errors without a blocking browser-native alert")
 	}
 }

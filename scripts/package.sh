@@ -40,7 +40,6 @@ trap 'rm -rf -- "${stage_dir}"' EXIT
 cp "${repo_root}/LICENSE" "${repo_root}/README.md" "${repo_root}/README.zh-CN.md" "${repo_root}/THIRD_PARTY_NOTICES.md" "${stage_dir}/"
 cp "${repo_root}/assets/fonts/OFL.txt" "${stage_dir}/JETBRAINS_MONO_OFL.txt"
 cp -R "${repo_root}/docs" "${stage_dir}/docs"
-extra_files=()
 if [[ "${target_os}" == "linux" ]]; then
   (
     cd "${repo_root}"
@@ -50,12 +49,15 @@ if [[ "${target_os}" == "linux" ]]; then
   )
   cp "${repo_root}/scripts/bootstrap-linux.sh" "${stage_dir}/bootstrap-linux.sh"
   chmod 0755 "${stage_dir}/cpamp-theme-bootstrap" "${stage_dir}/bootstrap-linux.sh"
-  extra_files+=(cpamp-theme-bootstrap bootstrap-linux.sh)
 fi
 rm -f -- "${archive_path}"
 (
   cd "${stage_dir}"
-  zip -X -q -r "${archive_path}" "cpamp-theme-studio${extension}" LICENSE README.md README.zh-CN.md THIRD_PARTY_NOTICES.md JETBRAINS_MONO_OFL.txt docs "${extra_files[@]}"
+  if [[ "${target_os}" == "linux" ]]; then
+    zip -X -q -r "${archive_path}" "cpamp-theme-studio${extension}" LICENSE README.md README.zh-CN.md THIRD_PARTY_NOTICES.md JETBRAINS_MONO_OFL.txt docs cpamp-theme-bootstrap bootstrap-linux.sh
+  else
+    zip -X -q -r "${archive_path}" "cpamp-theme-studio${extension}" LICENSE README.md README.zh-CN.md THIRD_PARTY_NOTICES.md JETBRAINS_MONO_OFL.txt docs
+  fi
 )
 if command -v sha256sum >/dev/null 2>&1; then
   checksum="$(sha256sum "${archive_path}" | awk '{print $1}')"

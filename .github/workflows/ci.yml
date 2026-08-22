@@ -63,11 +63,11 @@ jobs:
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: '24'
-      - name: Build Windows plugin
+      - name: Package Windows plugin
         if: runner.os == 'Windows'
         shell: pwsh
-        run: ./scripts/build.ps1 -Version 0.2.0-dev -Target '${{ matrix.target }}'
-      - name: Build Unix plugin
+        run: ./scripts/package.ps1 -Version 0.2.0-dev -Target '${{ matrix.target }}'
+      - name: Package Unix plugin
         if: runner.os != 'Windows'
         shell: bash
-        run: ./scripts/build.sh 0.2.0-dev '${{ matrix.target }}'
+        run: ./scripts/package.sh 0.2.0-dev '${{ matrix.target }}'

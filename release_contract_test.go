@@ -167,6 +167,9 @@ func TestLinuxReleasePackagesIncludeBootstrap(t *testing.T) {
 			t.Errorf("Linux package is missing bootstrap contract %q", required)
 		}
 	}
+	if strings.Contains(script, "${extra_files[@]}") {
+		t.Error("Linux package uses an empty array expansion that fails under macOS Bash 3.2 with nounset")
+	}
 }
 
 func TestLinuxBootstrapDownloaderVerifiesPinnedRelease(t *testing.T) {

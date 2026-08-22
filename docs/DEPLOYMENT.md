@@ -65,7 +65,7 @@ An absolute `plugins.dir` is strongly recommended. CPA v7.2.138 writes a store i
 Then use CPAMP:
 
 1. Open Plugins → Plugin Store and confirm the custom source has no error.
-2. Search for `CPAMP Theme Studio` and choose Latest or a specific version such as `0.1.4`.
+2. Search for `CPAMP Theme Studio` and choose Latest or a specific version such as `0.1.5`.
 3. Complete the third-party confirmation and install it.
 4. Record the returned version and actual `path`; never assume a relative directory is beside the CPA executable.
 5. After every install or upgrade, click `Restart CPA` on the Theme Studio store card or Installed Plugins row and confirm. The control waits for process replacement and loader reinjection before refreshing. If it reports that automatic restart is unavailable, restart the effective CPA service manually. Theme Studio's panel watcher is process-local; CPA hot reload can leave the retired version alive until process exit, causing old and new loader cache keys to alternate.
@@ -106,7 +106,7 @@ Stop CPA, then copy the library into the matching platform directory:
 <CPA_HOME>/plugins/<goos>/<goarch>/cpamp-theme-studio.<dll|so|dylib>
 ```
 
-Versioned names such as `cpamp-theme-studio-v0.1.4.dll` are also accepted by CPA. Do not keep multiple unversioned copies.
+Versioned names such as `cpamp-theme-studio-v0.1.5.dll` are also accepted by CPA. Do not keep multiple unversioned copies.
 
 ## 5. Build from source
 
@@ -117,7 +117,7 @@ git clone https://github.com/Cec1c/cpamp-theme-studio.git
 cd cpamp-theme-studio
 go test ./...
 node --check assets/loader.js
-./scripts/package.sh 0.1.4-dev
+./scripts/package.sh 0.1.5-dev
 ```
 
 Windows:
@@ -127,7 +127,7 @@ git clone https://github.com/Cec1c/cpamp-theme-studio.git
 Set-Location .\cpamp-theme-studio
 go test ./...
 node --check .\assets\loader.js
-.\scripts\package.ps1 -Version 0.1.4-dev
+.\scripts\package.ps1 -Version 0.1.5-dev
 ```
 
 The build requires Go 1.26+ and a native C compiler. Build on the same OS/architecture as the target because the plugin uses CGO `c-shared` mode.
@@ -238,7 +238,7 @@ Do not use the marker alone as the health check; registration, resource response
 5. Start CPA and repeat all verification checks.
 6. Confirm the current CPAMP panel still has exactly one marker block.
 
-When upgrading to `0.1.4`, use the new card control to restart the effective CPA process, or restart it manually if the configured mode is unavailable. Confirm that the injected loader URL ends in `v=0.1.4`; existing browser preferences are retained, the native top-right Theme control remains the single editor entry point, and the Typography and Density sections remain reachable inside the scrolling editor.
+When upgrading to `0.1.5`, use the card control to restart the effective CPA process, or restart it manually if the configured mode is unavailable. Confirm that the injected loader URL ends in `v=0.1.5`; existing browser preferences are retained, the native top-right Theme control remains the single editor entry point, and the drawer uses CPAMP's pill-shaped plugin-host scrollbar while Typography and Density remain reachable.
 
 Panel updates do not require reinstalling the plugin. If CPAMP replaces `management.html`, the watcher should restore the loader within `watch_seconds`.
 

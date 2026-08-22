@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -15,6 +17,9 @@ func preserveRestartHooks(t *testing.T) {
 	originalExit := restartExit
 	originalCommand := restartCommand
 	originalSchedule := restartSchedule
+	originalBrokerDirectory := restartBrokerDirectory
+	originalBrokerRequest := restartBrokerRequest
+	originalWriteBroker := restartWriteBroker
 	t.Cleanup(func() {
 		restartOS = originalOS
 		restartPID = originalPID
@@ -23,8 +28,39 @@ func preserveRestartHooks(t *testing.T) {
 		restartExit = originalExit
 		restartCommand = originalCommand
 		restartSchedule = originalSchedule
+		restartBrokerDirectory = originalBrokerDirectory
+		restartBrokerRequest = originalBrokerRequest
+		restartWriteBroker = originalWriteBroker
 		resetRestartRuntimeForTest()
 	})
+}
+
+func TestPrepareRestartPlanUsesBootstrapBroker(t *testing.T) {
+	preserveRestartHooks(t)
+	restartOS = "linux"
+	directory := t.TempDir()
+	restartBrokerDirectory = directory
+	restartBrokerRequest = filepath.Join(directory, "restart.request")
+	restartWriteBroker = writeBrokerRestartRequest
+	restartPID = func() int { return 4242 }
+
+	plan, errPlan := prepareRestartPlan(injectorConfig{RestartMode: restartModeBroker})
+	if errPlan != nil {
+		t.Fatal(errPlan)
+	}
+	if plan.mode != restartModeBroker {
+		t.Fatalf("mode = %q", plan.mode)
+	}
+	if errRun := plan.run(); errRun != nil {
+		t.Fatal(errRun)
+	}
+	raw, errRead := os.ReadFile(restartBrokerRequest)
+	if errRead != nil {
+		t.Fatal(errRead)
+	}
+	if !strings.Contains(string(raw), "pid=4242") {
+		t.Fatalf("broker request = %q", raw)
+	}
 }
 
 func TestPrepareRestartPlanUsesValidatedCurrentSystemdService(t *testing.T) {
@@ -33,6 +69,8 @@ func TestPrepareRestartPlanUsesValidatedCurrentSystemdService(t *testing.T) {
 	restartPID = func() int { return 4242 }
 	restartExecutable = func() (string, error) { return "/opt/cpa/cli-proxy-api", nil }
 	restartReadFile = func(string) ([]byte, error) { return nil, fmt.Errorf("not available") }
+	restartBrokerDirectory = t.TempDir()
+	restartBrokerRequest = filepath.Join(restartBrokerDirectory, "restart.request")
 	var restarted []string
 	restartCommand = func(name string, args ...string) ([]byte, error) {
 		if name != "systemctl" {

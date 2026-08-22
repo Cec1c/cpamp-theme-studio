@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$Version = '0.1.5-dev',
+    [string]$Version = '0.2.0-dev',
     [string]$Target = '',
     [string]$OutputDirectory = 'dist',
     [switch]$SkipTests
@@ -62,7 +62,7 @@ try {
     $env:CGO_ENABLED = '1'
     $env:GOOS = $targetOS
     $env:GOARCH = $targetArch
-    go build -trimpath -buildmode=c-shared -ldflags "-s -w -X=main.pluginVersion=$versionValue" -o $libraryPath .
+    go build -buildvcs=false -trimpath -buildmode=c-shared -ldflags "-s -w -X=main.pluginVersion=$versionValue" -o $libraryPath .
     if ($LASTEXITCODE -ne 0) { throw "go build failed with exit code $LASTEXITCODE" }
     if (Test-Path -LiteralPath $headerPath) {
         Remove-Item -LiteralPath $headerPath

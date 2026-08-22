@@ -87,9 +87,10 @@ jobs:
           for archive in dist/*.zip; do
             unzip -t "${archive}" >/dev/null
           done
+          install -m 0755 scripts/bootstrap-linux.sh dist/bootstrap-linux.sh
           (
             cd dist
-            sha256sum cpamp-theme-studio_*.zip | sort -k2
+            sha256sum bootstrap-linux.sh cpamp-theme-studio_*.zip | sort -k2
           ) >dist/checksums.txt
       - name: Generate pinned plugin-store registry
         shell: bash
@@ -116,5 +117,6 @@ jobs:
           prerelease: ${{ steps.release_type.outputs.prerelease }}
           files: |
             dist/cpamp-theme-studio_*.zip
+            dist/bootstrap-linux.sh
             dist/checksums.txt
             dist/registry.json

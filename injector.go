@@ -89,7 +89,7 @@ func parseInjectorConfig(raw []byte) (injectorConfig, error) {
 		}
 		cfg.RestartMode = strings.ToLower(strings.TrimSpace(parsed))
 		if !validRestartMode(cfg.RestartMode) {
-			return injectorConfig{}, fmt.Errorf("restart_mode must be one of auto, disabled, systemd, or self-exit")
+			return injectorConfig{}, fmt.Errorf("restart_mode must be one of auto, disabled, systemd, self-exit, or broker")
 		}
 	}
 	if value, found := configValue(values, "restart_service", "restart-service"); found {

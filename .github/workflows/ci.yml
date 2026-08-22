@@ -35,6 +35,7 @@ jobs:
           go vet ./...
           go test -race ./...
           node --check assets/loader.js
+          bash -n scripts/*.sh
           python -m json.tool registry.json >/dev/null
           python scripts/generate_registry_test.py
 
@@ -65,8 +66,8 @@ jobs:
       - name: Build Windows plugin
         if: runner.os == 'Windows'
         shell: pwsh
-        run: ./scripts/build.ps1 -Version 0.1.0-dev -Target '${{ matrix.target }}'
+        run: ./scripts/build.ps1 -Version 0.2.0-dev -Target '${{ matrix.target }}'
       - name: Build Unix plugin
         if: runner.os != 'Windows'
         shell: bash
-        run: ./scripts/build.sh 0.1.0-dev '${{ matrix.target }}'
+        run: ./scripts/build.sh 0.2.0-dev '${{ matrix.target }}'

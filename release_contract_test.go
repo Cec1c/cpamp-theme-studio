@@ -133,13 +133,63 @@ func TestReleaseWorkflowPublishesCPAStoreAssets(t *testing.T) {
 			t.Errorf("release workflow is missing target %s", target)
 		}
 	}
-	for _, asset := range []string{"dist/cpamp-theme-studio_*.zip", "dist/checksums.txt", "dist/registry.json"} {
+	for _, asset := range []string{"dist/cpamp-theme-studio_*.zip", "dist/bootstrap-linux.sh", "dist/checksums.txt", "dist/registry.json"} {
 		if !strings.Contains(workflow, asset) {
 			t.Errorf("release workflow is missing asset rule %s", asset)
 		}
 	}
+	for _, required := range []string{
+		"install -m 0755 scripts/bootstrap-linux.sh dist/bootstrap-linux.sh",
+		"sha256sum bootstrap-linux.sh cpamp-theme-studio_*.zip",
+	} {
+		if !strings.Contains(workflow, required) {
+			t.Errorf("release workflow is missing bootstrap contract %q", required)
+		}
+	}
 	if !strings.Contains(workflow, "python scripts/generate_registry.py") {
 		t.Error("release workflow does not generate the pinned registry from packaged assets")
+	}
+}
+
+func TestLinuxReleasePackagesIncludeBootstrap(t *testing.T) {
+	raw, errRead := os.ReadFile("scripts/package.sh")
+	if errRead != nil {
+		t.Fatal(errRead)
+	}
+	script := string(raw)
+	for _, required := range []string{
+		"./cmd/cpamp-theme-bootstrap",
+		"cpamp-theme-bootstrap",
+		"scripts/bootstrap-linux.sh",
+		"bootstrap-linux.sh",
+	} {
+		if !strings.Contains(script, required) {
+			t.Errorf("Linux package is missing bootstrap contract %q", required)
+		}
+	}
+}
+
+func TestLinuxBootstrapDownloaderVerifiesPinnedRelease(t *testing.T) {
+	raw, errRead := os.ReadFile("scripts/bootstrap-linux.sh")
+	if errRead != nil {
+		t.Fatal(errRead)
+	}
+	script := string(raw)
+	for _, required := range []string{
+		"--bootstrap-version",
+		"--download-proxy",
+		"--proto '=https'",
+		"--tlsv1.2",
+		"checksums.txt",
+		"sha256sum",
+		"SHA-256 mismatch",
+		"export HTTP_PROXY=",
+		"export HTTPS_PROXY=",
+		"exec \"${temporary}/cpamp-theme-bootstrap\"",
+	} {
+		if !strings.Contains(script, required) {
+			t.Errorf("Linux bootstrap downloader is missing %q", required)
+		}
 	}
 }
 

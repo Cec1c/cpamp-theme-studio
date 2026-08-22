@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-version="${1:-0.1.5-dev}"
+version="${1:-0.2.0-dev}"
 target="${2:-$(go env GOHOSTOS)-$(go env GOHOSTARCH)}"
 output_dir="${3:-dist}"
 version="${version#v}"
@@ -40,7 +40,7 @@ if command -v node >/dev/null 2>&1; then
   node --check assets/loader.js
 fi
 CGO_ENABLED=1 GOOS="${target_os}" GOARCH="${target_arch}" \
-  go build -trimpath -buildmode=c-shared \
+  go build -buildvcs=false -trimpath -buildmode=c-shared \
   -ldflags "-s -w -X=main.pluginVersion=${version}" \
   -o "${output_dir}/cpamp-theme-studio${extension}" .
 rm -f "${output_dir}/cpamp-theme-studio.h"

@@ -1,6 +1,6 @@
 # CPAMP 主题工作室
 
-[English](README.md) · [部署文档](docs/DEPLOYMENT.zh-CN.md) · [Agent 部署手册](docs/AGENT_DEPLOYMENT.md) · [v0.1.5 发布说明](docs/RELEASE_NOTES_v0.1.5.md)
+[English](README.md) · [Linux bootstrap](docs/BOOTSTRAP.zh-CN.md) · [部署文档](docs/DEPLOYMENT.zh-CN.md) · [Agent 部署手册](docs/AGENT_DEPLOYMENT.md) · [v0.2.0 发布说明](docs/RELEASE_NOTES_v0.2.0.md)
 
 CPAMP 主题工作室是一个通过 CPAMP 插件市场交付的前端主题扩展，为可写的 [CPA Manager Plus](https://github.com/seakee/CPA-Manager-Plus) 面板增加可持久化的视觉主题编辑器。功能不再依赖 CPAMP 上游 PR，也不需要长期维护 CPAMP fork。
 
@@ -35,7 +35,7 @@ CPAMP 主题工作室是一个通过 CPAMP 插件市场交付的前端主题扩�
 - 简体中文、繁体中文、英语、俄语。
 - Shadow DOM 隔离、键盘焦点处理、减少动画支持和移动端布局。
 - 复用 CPAMP 右上角原生“主题”控件作为唯一入口，不再生成悬浮按钮或插件页/侧栏菜单。
-- 在“已安装插件”行和插件商店卡片提供带二次确认的“重启 CPA”控件，让热安装/升级能够结束旧版本 watcher。
+- 在“已安装插件”行和插件商店卡片提供带二次确认的“重启 CPA”控件；一次 Linux bootstrap 后，该控件和后续市场安装可以在不经过部署 Agent 的情况下自动重启、验证并失败回滚。
 - SPA 重入和 CPAMP 更新覆盖面板后的幂等运行时恢复与重注入。
 - 热停用时确定性清理；进程正常关闭时仅尽力清理。
 
@@ -45,13 +45,15 @@ CPAMP 主题工作室是一个通过 CPAMP 插件市场交付的前端主题扩�
 | --- | --- | --- |
 | CPA `:8317` 托管的 CPAMP 轻量面板 | 支持 | CPA 需要可写的 `static/management.html` |
 | 使用外置 `PANEL_PATH` 的 CPAMP Manager Server | 有条件支持 | CPA 与 Manager Server 必须共享同一个可写文件，并配置插件 `panel_path` |
-| 只有内嵌面板的 Manager Server | 无法持久注入 | 面板编译在另一个进程中，必须先改用外置 `PANEL_PATH` |
+| 只有内嵌面板的 Manager Server | 可由 Linux bootstrap 外置 | 提供活动公网 `--panel-url`；bootstrap 会创建并绑定可写 `PANEL_PATH` |
 
-插件运行在 CPA 内，不能改写另一个 Manager Server 可执行文件或容器镜像内嵌的只读面板。
+插件运行在 CPA 内，不能直接改写另一个进程的内嵌面板。Linux bootstrap 可以先下载活动面板，让两个服务绑定到外置文件，再验证公网结果。
 
 ## 推荐安装：CPAMP 插件市场
 
-项目使用本仓库提供的社区商店源，不需要向 CPAMP 或 CPA 上游提交 PR。把以下字段合并到 CPA 的有效 `config.yaml`；`dir` 建议使用绝对路径，避免 systemd 工作目录不同导致插件装到了错误位置：
+项目使用本仓库提供的社区商店源，不需要向 CPAMP 或 CPA 上游提交 PR。Linux/systemd 直接部署建议先执行管理员核对过的[一次性 bootstrap](docs/BOOTSTRAP.zh-CN.md)。市场插件不能安全地自行获得 root；但完成 bootstrap 后，后续安装/升级和卡片确认重启都由事务化流程自动完成。
+
+未安装 bootstrap 时，把以下字段合并到 CPA 的有效 `config.yaml`，并准备手工重启 CPA；`dir` 建议使用绝对路径，避免 systemd 工作目录不同导致插件装到了错误位置：
 
 ```yaml
 plugins:
@@ -65,8 +67,8 @@ plugins:
 
 1. 打开 CPAMP 的“插件”→“插件商店”。
 2. 确认来源中出现 `raw.githubusercontent.com`，搜索 `CPAMP Theme Studio`。
-3. 选择 Latest 或 `0.1.5` 并安装；CPAMP/CPA 会下载清单固定的平台 Release 压缩包，校验商店清单携带的 SHA-256，把带版本号的动态库写到 `<dir>/<goos>/<goarch>/`，并创建启用配置。
-4. 安装或升级后，点击 Theme Studio 商店卡片或“已安装插件”行中的“重启 CPA”并确认。控件会等待新 CPA 进程和新面板注入恢复后自动刷新；若当前服务管理方式不支持安全自动重启，则手工重启实际 CPA 服务。不要只依赖热重载：旧插件版本的面板 watcher 可能持续到进程退出。
+3. 选择 Latest 或 `0.2.0` 并安装；CPAMP/CPA 会下载清单固定的平台 Release 压缩包，校验商店清单携带的 SHA-256，把带版本号的动态库写到 `<dir>/<goos>/<goarch>/`，并创建启用配置。
+4. 已安装 bootstrap 时，市场写入本身就会触发绑定到 CPA unit 的 systemd broker。它等待动态库/配置稳定，重启 CPA，验证目标版本与真实面板后才接受；失败时删除未通过的部署并恢复上一个 accepted 插件/配置。卡片的“重启 CPA”确认控件复用同一个 broker。未安装 bootstrap或其他平台仍需手工重启实际 CPA 服务。
 5. 回到 CPAMP 仪表盘，点击右上角操作区原有的“主题”控件；插件会替换该控件的点击行为，不再添加悬浮按钮。
 
 注入 loader 和内置字体使用的隐藏只读资源为：
@@ -100,7 +102,7 @@ remote-management:
 | `panel_path` | 空 | 明确指定 `management.html` 或其目录；相对路径以 CPA 工作目录为准 |
 | `host_config_path` | 自动发现 | CPA `config.yaml`，用于发现热停用并立即清理 |
 | `watch_seconds` | `3` | 面板检查周期，限制在 1–300 秒 |
-| `restart_mode` | `auto` | `auto`、`disabled`、`systemd` 或 `self-exit`；修改前先阅读部署文档 |
+| `restart_mode` | `auto` | Linux bootstrap 后为 `broker`；其他情况可用 `auto`、`disabled`、`systemd` 或 `self-exit` |
 | `restart_service` | 空 | 可选 systemd 服务覆盖；只有其 `MainPID` 等于当前 CPA PID 时才接受 |
 | `restart_request` | 内部字段 | 已认证卡片控件写入的一次性值；不要手工修改 |
 
@@ -116,7 +118,7 @@ plugins:
     - "https://raw.githubusercontent.com/Cec1c/cpamp-theme-studio/main/registry.json"
 ```
 
-`registry.json` 使用 CPA schema v2 直链资产：每个系统/架构的 URL、字节数和 SHA-256 都固定到不可变的 GitHub Release，因此市场安装不依赖 GitHub REST API 的匿名配额。CPA 会把 ZIP 根目录中的动态库安装为 `cpamp-theme-studio-v<version>.<ext>`。Release 工作流会从实际产物生成六个平台压缩包、`checksums.txt` 和已核验的候选商店清单。
+`registry.json` 使用 CPA schema v2 直链资产：每个系统/架构的 URL、字节数和 SHA-256 都固定到不可变的 GitHub Release，因此市场安装不依赖 GitHub REST API 的匿名配额。CPA 会把 ZIP 根目录中的动态库安装为 `cpamp-theme-studio-v<version>.<ext>`。Release 工作流会从实际产物生成六个平台压缩包、独立的 `bootstrap-linux.sh`、`checksums.txt` 和已核验的候选商店清单；Linux 包还包含静态 bootstrap 二进制与下载器。
 
 ## 从源码构建
 
@@ -125,15 +127,15 @@ plugins:
 Windows PowerShell：
 
 ```powershell
-.\scripts\build.ps1 -Version 0.1.5-dev
-.\scripts\package.ps1 -Version 0.1.5-dev
+.\scripts\build.ps1 -Version 0.2.0-dev
+.\scripts\package.ps1 -Version 0.2.0-dev
 ```
 
 Linux 或 macOS：
 
 ```bash
-./scripts/build.sh 0.1.5-dev
-./scripts/package.sh 0.1.5-dev
+./scripts/build.sh 0.2.0-dev
+./scripts/package.sh 0.2.0-dev
 ```
 
 动态库和压缩包输出到 `dist/`，不会提交进 Git。
@@ -144,8 +146,9 @@ Linux 或 macOS：
 2. 插件注册一个供 loader 和字体使用的隐藏只读资源路由，不发布 CPAMP 侧栏菜单。
 3. 注入器寻找可信的可写 `management.html`，在 `</head>` 前加入唯一 start/end 标记块。
 4. loader 用 Shadow DOM 挂载编辑器，通过 CPAMP CSS 变量和兼容的本地主题存储应用设置。
-5. 重启控件通过 CPAMP 已认证的配置保存界面写入随机一次性请求；Linux/systemd 会校验所选服务确实拥有当前 CPA PID，显式 `self-exit` 则要求外部 supervisor。
-6. 上游更新覆盖文件后自动恢复标记；热停用会确定性移除标记。进程关闭时，CPA 可能在原生插件的异步 shutdown 完成前退出，因此清理仅为 best effort。
+5. 完成一次 Linux bootstrap 后，市场文件变化与卡片确认请求由绑定到唯一已核验 CPA unit 的 root broker 处理；它执行进程、资源和面板验收，失败时恢复上一个 accepted 版本。浏览器和插件都不会获得 systemd 权限。
+6. 未安装 bootstrap 时，控件仍可使用旧的 PID 校验 systemd/self-exit 模式，或明确提示需要手工重启。
+7. 上游更新覆盖文件后自动恢复标记；热停用会确定性移除标记。进程关闭时，CPA 可能在原生插件的异步 shutdown 完成前退出，因此清理仅为 best effort。
 
 插件不会拦截 CPA 请求、读取或代理凭证、公开任意文件，也不会发布未认证的重启接口。
 
@@ -169,6 +172,9 @@ Linux 或 macOS：
 - 热停用后精确恢复原始 CPAMP SHA-256
 - “已安装插件”行和商店卡片的重启控件、安全取消、一次性请求持久化、supervisor 拉起新进程、loader 恢复与自动刷新
 - 二次确认焦点处理、44 px 控件、深浅色危险语义、减少动画，以及 375×812 下无横向溢出
+- 在真实 systemd 管理的 CPA v7.2.138 测试环境完成 Linux bootstrap dry-run/apply
+- 市场文件/配置变化触发自动重启，并通过插件注册、资源版本和单一面板标记验收
+- 卡片确认 broker 重启；故意损坏 `.so` 的升级验证失败后，自动恢复旧插件/配置并确认旧版本重新工作
 
 ## 许可与来源
 

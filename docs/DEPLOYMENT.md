@@ -1,6 +1,6 @@
 # Deployment, upgrade, rollback, and uninstall
 
-[简体中文](DEPLOYMENT.zh-CN.md) · [Agent runbook](AGENT_DEPLOYMENT.md)
+[简体中文](DEPLOYMENT.zh-CN.md) · [Linux bootstrap](BOOTSTRAP.md) · [Agent runbook](AGENT_DEPLOYMENT.md)
 
 This guide deploys CPAMP Theme Studio into an existing CPA installation. It does not install CPA or CPAMP and it does not expose a management port.
 
@@ -12,7 +12,7 @@ Record these values before changing anything:
 - CPA `config.yaml` path.
 - CPA plugin directory (`plugins` by default).
 - Host OS and architecture (`windows`, `linux`, or `darwin`; `amd64` or `arm64`).
-- Panel mode: CPA Lightweight Panel or Manager Server with an external `PANEL_PATH`.
+- Panel mode: CPA Lightweight Panel, Manager Server with external `PANEL_PATH`, or embedded Manager panel to be externalized by the Linux bootstrap.
 - Exact writable `management.html` path.
 - Desired plugin version.
 
@@ -23,7 +23,7 @@ Do not print or commit the CPA Management Key. The plugin does not need it.
 1. Confirm CPA is v7.2.138 or a version already validated in your environment.
 2. Confirm the panel is CPAMP v1.12.2 or a version already validated in your environment.
 3. Confirm `management.html` is a regular writable file, not a symbolic link, and is no larger than 64 MiB.
-4. Back up CPA `config.yaml`, the current plugin library, and the panel file before the first deployment.
+4. Back up CPA `config.yaml`, the current plugin library, and the panel file before the first deployment. The Linux bootstrap creates a scoped backup automatically, but keep the operator's independent backup as well.
 5. Keep CPA bound to localhost while testing.
 
 Optional download proxy:
@@ -46,6 +46,8 @@ Use the proxy only when it exists on the machine performing the download.
 
 CPAMP currently uses CPA's plugin-store APIs for discovery, download, verification, installation, and lifecycle control. The product feature is browser-side code, but a minimal CPA native bridge is still shipped so the extension can enter the CPAMP store and page container. This registry uses schema-v2 direct artifacts with a pinned URL, byte size, and SHA-256 for each platform, so installation does not consume anonymous GitHub REST API quota.
 
+For a direct Linux/systemd deployment, run the [one-time restart bootstrap](BOOTSTRAP.md) before using the store. A marketplace package cannot give itself root privileges. The reviewed bootstrap binds a narrow broker to one inspected CPA unit; afterwards the marketplace write automatically restarts and verifies CPA, and a failed upgrade restores the previously accepted Theme Studio library/config. No Agent is needed for later store upgrades. On other platforms, or when bootstrap is intentionally omitted, plan a manual CPA restart.
+
 Add the community source on CPAMP's Configuration page, or minimally merge these fields into the effective CPA `config.yaml`:
 
 ```yaml
@@ -65,10 +67,10 @@ An absolute `plugins.dir` is strongly recommended. CPA v7.2.138 writes a store i
 Then use CPAMP:
 
 1. Open Plugins → Plugin Store and confirm the custom source has no error.
-2. Search for `CPAMP Theme Studio` and choose Latest or a specific version such as `0.1.5`.
+2. Search for `CPAMP Theme Studio` and choose Latest or a specific version such as `0.2.0`.
 3. Complete the third-party confirmation and install it.
 4. Record the returned version and actual `path`; never assume a relative directory is beside the CPA executable.
-5. After every install or upgrade, click `Restart CPA` on the Theme Studio store card or Installed Plugins row and confirm. The control waits for process replacement and loader reinjection before refreshing. If it reports that automatic restart is unavailable, restart the effective CPA service manually. Theme Studio's panel watcher is process-local; CPA hot reload can leave the retired version alive until process exit, causing old and new loader cache keys to alternate.
+5. With bootstrap installed, the plugin-directory write triggers the broker automatically; wait for the store flow to finish and for CPA to return. The card's confirmed `Restart CPA` control remains available for explicit restarts and uses the same broker. Without bootstrap, use the configured legacy restart mode or restart the effective CPA service manually. Theme Studio's panel watcher is process-local; CPA hot reload can leave the retired version alive until process exit, causing old and new loader cache keys to alternate.
 6. Confirm `registered=true` and `effective_enabled=true` under Installed Plugins, then return to the dashboard and click CPAMP's existing top-right Theme control. No floating or sidebar Theme Studio entry is expected.
 
 The store path passes only when discovery, pinned SHA-256 verification, installation, target path, registration, and the HTTP 200 resource check all succeed. If store installation fails, do not manually copy a library and report a successful store deployment. Capture the CPAMP response and CPA logs first; use the next section only as an explicitly reported manual fallback.
@@ -106,7 +108,7 @@ Stop CPA, then copy the library into the matching platform directory:
 <CPA_HOME>/plugins/<goos>/<goarch>/cpamp-theme-studio.<dll|so|dylib>
 ```
 
-Versioned names such as `cpamp-theme-studio-v0.1.5.dll` are also accepted by CPA. Do not keep multiple unversioned copies.
+Versioned names such as `cpamp-theme-studio-v0.2.0.dll` are also accepted by CPA. Do not keep multiple unversioned copies.
 
 ## 5. Build from source
 
@@ -117,7 +119,7 @@ git clone https://github.com/Cec1c/cpamp-theme-studio.git
 cd cpamp-theme-studio
 go test ./...
 node --check assets/loader.js
-./scripts/package.sh 0.1.5-dev
+./scripts/package.sh 0.2.0-dev
 ```
 
 Windows:
@@ -127,7 +129,7 @@ git clone https://github.com/Cec1c/cpamp-theme-studio.git
 Set-Location .\cpamp-theme-studio
 go test ./...
 node --check .\assets\loader.js
-.\scripts\package.ps1 -Version 0.1.5-dev
+.\scripts\package.ps1 -Version 0.2.0-dev
 ```
 
 The build requires Go 1.26+ and a native C compiler. Build on the same OS/architecture as the target because the plugin uses CGO `c-shared` mode.
@@ -169,12 +171,13 @@ The plugin card does not call a public restart API and does not read the Managem
 
 | `restart_mode` | Behavior | Safe use |
 | --- | --- | --- |
+| `broker` | Write a request for the root-owned bootstrap broker | Set by bootstrap; do not configure unless `/etc/cpamp-theme-studio/bootstrap.json` and its active units belong to this CPA service |
 | `auto` | Default. On Linux, discover and validate the current systemd unit | The unit is accepted only when its `MainPID` equals the current CPA PID |
 | `systemd` | Use systemd, optionally with `restart_service` | The configured unit name is syntax-checked and still must pass the same `MainPID` check |
 | `self-exit` | Exit the CPA process with code `75` | Use only when Docker or another external supervisor is confirmed to restart that exact process |
 | `disabled` | Disable automatic restart | Use for manual processes or when no safe supervisor is available |
 
-`restart_request` is an internal one-time field displayed by CPA's generic plugin configuration form. Do not prefill, reuse, or edit it manually. On Windows, macOS, containers without systemd, and wrapper-based services, `auto` can correctly report unavailable. Configure `self-exit` only after verifying the supervisor's restart policy; without a supervisor it simply stops CPA.
+`restart_request` is an internal one-time field displayed by CPA's generic plugin configuration form. Do not prefill, reuse, or edit it manually. `broker` writes only `/run/cpamp-theme-studio/restart.request`; the plugin itself does not run `systemctl`. On Windows, macOS, containers without systemd, and wrapper-based services, `auto` can correctly report unavailable. Configure `self-exit` only after verifying the supervisor's restart policy; without a supervisor it simply stops CPA.
 
 ## 7. Manager Server with external PANEL_PATH
 
@@ -188,7 +191,7 @@ This mode works only when both processes see the same writable file.
 
 When the two services run in separate containers, mount one host file into both containers. The in-container paths may differ, but both mounts must refer to the same host file.
 
-An embedded-only Manager Server panel cannot be patched. Do not claim login-page persistence in that mode.
+The plugin alone cannot patch an embedded-only Manager Server panel. On a direct Linux/systemd deployment, the bootstrap can externalize it: pass the active public `--panel-url`, let bootstrap seed `/var/lib/cpamp-theme-studio/panel/management.html`, and review the generated Manager service `PANEL_PATH` drop-in. It backs up, restarts, and verifies both services. Containerized or non-systemd Manager deployments still require a manually configured shared external panel.
 
 ## 8. Verify
 
@@ -238,11 +241,15 @@ Do not use the marker alone as the health check; registration, resource response
 5. Start CPA and repeat all verification checks.
 6. Confirm the current CPAMP panel still has exactly one marker block.
 
-When upgrading to `0.1.5`, use the card control to restart the effective CPA process, or restart it manually if the configured mode is unavailable. Confirm that the injected loader URL ends in `v=0.1.5`; existing browser preferences are retained, the native top-right Theme control remains the single editor entry point, and the drawer uses CPAMP's pill-shaped plugin-host scrollbar while Typography and Density remain reachable.
+When upgrading to `0.2.0` after bootstrap, the marketplace write should restart CPA automatically. Confirm that the injected loader URL ends in `v=0.2.0`, the broker state records the new version as accepted, existing browser preferences remain, the native top-right Theme control is still the single editor entry point, and Typography/Density remain reachable. Without bootstrap, restart CPA manually or through a separately validated supervisor.
 
 Panel updates do not require reinstalling the plugin. If CPAMP replaces `management.html`, the watcher should restore the loader within `watch_seconds`.
 
 ## 10. Rollback
+
+When the bootstrap broker has already accepted a previous version, an upgrade that fails process, resource-version, or panel-marker verification is rolled back automatically: only unaccepted Theme Studio files are removed, only its plugin config subtree is restored, CPA is restarted, and the previous accepted deployment is verified. Inspect `journalctl -u cpamp-theme-studio-restart.service` before taking more action.
+
+For a manual deployment rollback:
 
 1. Disable `cpamp-theme-studio` in CPA config and wait for its marker block to disappear.
 2. Stop CPA.
@@ -250,6 +257,8 @@ Panel updates do not require reinstalling the plugin. If CPAMP replaces `managem
 4. Start CPA and verify the restored version.
 
 Hot-disable cleanup is deterministic. Normal process-shutdown cleanup is best effort because CPA may exit before asynchronous native-plugin shutdown finishes. If CPA exited or crashed before cleanup, restore the backed-up panel or remove only the three-line block from the start marker through the end marker. Never delete unrelated scripts from `management.html`.
+
+To remove the entire bootstrap and restore its original snapshot, use the backup ID printed by apply as documented in [Linux bootstrap rollback](BOOTSTRAP.md#rollback).
 
 ## 11. Uninstall
 

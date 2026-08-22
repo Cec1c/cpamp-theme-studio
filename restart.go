@@ -20,9 +20,12 @@ const (
 	restartModeDisabled = "disabled"
 	restartModeSystemd  = "systemd"
 	restartModeSelfExit = "self-exit"
+	restartModeBroker   = "broker"
 
-	maxRestartRequestLength = 128
-	restartExitCode         = 75
+	maxRestartRequestLength       = 128
+	restartExitCode               = 75
+	defaultRestartBrokerDirectory = "/run/cpamp-theme-studio"
+	defaultRestartBrokerRequest   = "/run/cpamp-theme-studio/restart.request"
 )
 
 type restartStatus struct {
@@ -53,6 +56,9 @@ var (
 	restartSchedule = func(action func()) {
 		time.AfterFunc(1500*time.Millisecond, action)
 	}
+	restartBrokerDirectory = defaultRestartBrokerDirectory
+	restartBrokerRequest   = defaultRestartBrokerRequest
+	restartWriteBroker     = writeBrokerRestartRequest
 )
 
 var restartRuntime = struct {
@@ -64,7 +70,7 @@ var restartRuntime = struct {
 
 func validRestartMode(mode string) bool {
 	switch mode {
-	case restartModeAuto, restartModeDisabled, restartModeSystemd, restartModeSelfExit:
+	case restartModeAuto, restartModeDisabled, restartModeSystemd, restartModeSelfExit, restartModeBroker:
 		return true
 	default:
 		return false
@@ -186,6 +192,14 @@ func prepareRestartPlan(cfg injectorConfig) (restartPlan, error) {
 			restartExit(restartExitCode)
 			return fmt.Errorf("process exit returned unexpectedly")
 		}}, nil
+	case restartModeBroker:
+		if restartOS != "linux" {
+			return restartPlan{}, fmt.Errorf("restart broker is unavailable on %s", restartOS)
+		}
+		if errBroker := validateRestartBroker(); errBroker != nil {
+			return restartPlan{}, errBroker
+		}
+		return restartPlan{mode: restartModeBroker, run: restartWriteBroker}, nil
 	case restartModeAuto, restartModeSystemd:
 		if restartOS != "linux" {
 			return restartPlan{}, fmt.Errorf("systemd restart is unavailable on %s", restartOS)
@@ -204,6 +218,53 @@ func prepareRestartPlan(cfg injectorConfig) (restartPlan, error) {
 	default:
 		return restartPlan{}, fmt.Errorf("unsupported restart mode %q", mode)
 	}
+}
+
+func validateRestartBroker() error {
+	info, errInfo := os.Lstat(restartBrokerDirectory)
+	if errInfo != nil {
+		return fmt.Errorf("restart broker directory is unavailable: %w", errInfo)
+	}
+	if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+		return fmt.Errorf("restart broker directory is not a regular directory")
+	}
+	if requestInfo, errRequest := os.Lstat(restartBrokerRequest); errRequest == nil {
+		if !requestInfo.Mode().IsRegular() || requestInfo.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("restart broker request is not a regular file")
+		}
+	} else if !os.IsNotExist(errRequest) {
+		return fmt.Errorf("inspect restart broker request: %w", errRequest)
+	}
+	return nil
+}
+
+func writeBrokerRestartRequest() error {
+	if errBroker := validateRestartBroker(); errBroker != nil {
+		return errBroker
+	}
+	file, errOpen := os.OpenFile(restartBrokerRequest, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	if os.IsExist(errOpen) {
+		return nil
+	}
+	if errOpen != nil {
+		return fmt.Errorf("create restart broker request: %w", errOpen)
+	}
+	payload := fmt.Sprintf("pid=%d\nrequested_at=%s\n", restartPID(), time.Now().UTC().Format(time.RFC3339Nano))
+	if _, errWrite := file.WriteString(payload); errWrite != nil {
+		file.Close()
+		_ = os.Remove(restartBrokerRequest)
+		return fmt.Errorf("write restart broker request: %w", errWrite)
+	}
+	if errSync := file.Sync(); errSync != nil {
+		file.Close()
+		_ = os.Remove(restartBrokerRequest)
+		return fmt.Errorf("sync restart broker request: %w", errSync)
+	}
+	if errClose := file.Close(); errClose != nil {
+		_ = os.Remove(restartBrokerRequest)
+		return fmt.Errorf("close restart broker request: %w", errClose)
+	}
+	return nil
 }
 
 func resolveSystemdService(configured string) (string, error) {

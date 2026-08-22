@@ -65,7 +65,7 @@ An absolute `plugins.dir` is strongly recommended. CPA v7.2.138 writes a store i
 Then use CPAMP:
 
 1. Open Plugins → Plugin Store and confirm the custom source has no error.
-2. Search for `CPAMP Theme Studio` and choose Latest or a specific version such as `0.1.2`.
+2. Search for `CPAMP Theme Studio` and choose Latest or a specific version such as `0.1.3`.
 3. Complete the third-party confirmation and install it.
 4. Record the returned version and actual `path`; never assume a relative directory is beside the CPA executable.
 5. Restart the effective CPA service after every install or upgrade. Theme Studio's panel watcher is process-local; CPA hot reload can leave the retired version alive until process exit, causing old and new loader cache keys to alternate.
@@ -106,7 +106,7 @@ Stop CPA, then copy the library into the matching platform directory:
 <CPA_HOME>/plugins/<goos>/<goarch>/cpamp-theme-studio.<dll|so|dylib>
 ```
 
-Versioned names such as `cpamp-theme-studio-v0.1.2.dll` are also accepted by CPA. Do not keep multiple unversioned copies.
+Versioned names such as `cpamp-theme-studio-v0.1.3.dll` are also accepted by CPA. Do not keep multiple unversioned copies.
 
 ## 5. Build from source
 
@@ -117,7 +117,7 @@ git clone https://github.com/Cec1c/cpamp-theme-studio.git
 cd cpamp-theme-studio
 go test ./...
 node --check assets/loader.js
-./scripts/package.sh 0.1.2-dev
+./scripts/package.sh 0.1.3-dev
 ```
 
 Windows:
@@ -127,7 +127,7 @@ git clone https://github.com/Cec1c/cpamp-theme-studio.git
 Set-Location .\cpamp-theme-studio
 go test ./...
 node --check .\assets\loader.js
-.\scripts\package.ps1 -Version 0.1.2-dev
+.\scripts\package.ps1 -Version 0.1.3-dev
 ```
 
 The build requires Go 1.26+ and a native C compiler. Build on the same OS/architecture as the target because the plugin uses CGO `c-shared` mode.
@@ -220,7 +220,7 @@ Do not use the marker alone as the health check; registration, resource response
 5. Start CPA and repeat all verification checks.
 6. Confirm the current CPAMP panel still has exactly one marker block.
 
-When upgrading to `0.1.2`, restart the effective CPA process first and then refresh the panel. Confirm that the injected loader URL ends in `v=0.1.2`; existing browser preferences are retained, the floating launcher disappears, and CPAMP's native top-right Theme control becomes the single entry point.
+When upgrading to `0.1.3`, restart the effective CPA process first and then refresh the panel. Confirm that the injected loader URL ends in `v=0.1.3`; existing browser preferences are retained, the native top-right Theme control remains the single entry point, and the Typography and Density sections are reachable inside the scrolling editor.
 
 Panel updates do not require reinstalling the plugin. If CPAMP replaces `management.html`, the watcher should restore the loader within `watch_seconds`.
 

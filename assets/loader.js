@@ -84,6 +84,7 @@
       mode: 'auto',
       preset: 'cpamp',
       radius: 'default',
+      font: 'jetbrains-mono',
       density: 'default',
       contentLayout: 'full',
       customAccent: '#3b82f6',
@@ -123,6 +124,7 @@
         open: '打开主题工作室', title: '主题工作室', subtitle: '为当前 CPAMP 调整视觉语言', close: '关闭', reset: '恢复默认',
         mode: '显示模式', auto: '跟随系统', light: '浅色', dark: '深色', palette: '配色', custom: '自定义强调色',
         radius: '圆角', square: '直角', small: '小', medium: '中', large: '大', xlarge: '超大', normal: '默认',
+        font: '字体', hostFont: 'CPAMP 默认', jetBrainsMono: 'JetBrains Mono', systemSans: '系统无衬线',
         density: '界面密度', compact: '紧凑', comfortable: '舒适',
         layout: '内容宽度', full: '铺满', centered: '居中', effects: '视觉效果', rich: '完整效果', efficient: '性能优先',
         scopeHost: '已连接宿主面板', scopeFrame: '当前为独立预览；请配置可写面板以全局生效',
@@ -133,6 +135,7 @@
         open: '開啟主題工作室', title: '主題工作室', subtitle: '調整目前 CPAMP 的視覺語言', close: '關閉', reset: '恢復預設',
         mode: '顯示模式', auto: '跟隨系統', light: '淺色', dark: '深色', palette: '配色', custom: '自訂強調色',
         radius: '圓角', square: '直角', small: '小', medium: '中', large: '大', xlarge: '超大', normal: '預設',
+        font: '字體', hostFont: 'CPAMP 預設', jetBrainsMono: 'JetBrains Mono', systemSans: '系統無襯線',
         density: '介面密度', compact: '緊湊', comfortable: '舒適',
         layout: '內容寬度', full: '鋪滿', centered: '置中', effects: '視覺效果', rich: '完整效果', efficient: '效能優先',
         scopeHost: '已連接宿主面板', scopeFrame: '目前為獨立預覽；請設定可寫面板以全域生效',
@@ -143,6 +146,7 @@
         open: 'Open Theme Studio', title: 'Theme Studio', subtitle: 'Tune the visual language of this CPAMP', close: 'Close', reset: 'Restore defaults',
         mode: 'Display mode', auto: 'System', light: 'Light', dark: 'Dark', palette: 'Palette', custom: 'Custom accent',
         radius: 'Corner radius', square: 'Square', small: 'Small', medium: 'Medium', large: 'Large', xlarge: 'Extra large', normal: 'Default',
+        font: 'Typography', hostFont: 'CPAMP default', jetBrainsMono: 'JetBrains Mono', systemSans: 'System sans',
         density: 'Density', compact: 'Compact', comfortable: 'Comfortable',
         layout: 'Content width', full: 'Full width', centered: 'Centered', effects: 'Visual effects', rich: 'Full effects', efficient: 'Performance',
         scopeHost: 'Connected to the host panel', scopeFrame: 'Standalone preview; configure a writable panel for global startup',
@@ -153,6 +157,7 @@
         open: 'Открыть студию тем', title: 'Студия тем', subtitle: 'Настройте визуальный язык CPAMP', close: 'Закрыть', reset: 'Сбросить',
         mode: 'Режим', auto: 'Системный', light: 'Светлый', dark: 'Тёмный', palette: 'Палитра', custom: 'Свой акцент',
         radius: 'Скругление', square: 'Без скругления', small: 'Малое', medium: 'Среднее', large: 'Большое', xlarge: 'Очень большое', normal: 'По умолчанию',
+        font: 'Шрифт', hostFont: 'CPAMP по умолчанию', jetBrainsMono: 'JetBrains Mono', systemSans: 'Системный шрифт',
         density: 'Плотность', compact: 'Компактная', comfortable: 'Просторная',
         layout: 'Ширина', full: 'На всю ширину', centered: 'По центру', effects: 'Эффекты', rich: 'Полные', efficient: 'Производительность',
         scopeHost: 'Подключено к панели', scopeFrame: 'Автономный просмотр; для запуска везде настройте доступный файл панели',
@@ -242,6 +247,7 @@
         mode: allowed(source.mode || hostThemeState.theme, ['auto', 'white', 'dark'], defaults.mode),
         preset: allowed(source.preset, presetOrder.concat(['custom']), defaults.preset),
         radius: allowed(source.radius, ['default', 'none', 'sm', 'md', 'lg', 'xl'], defaults.radius),
+        font: allowed(source.font, ['host', 'jetbrains-mono', 'system'], defaults.font),
         density: allowed(source.density, ['compact', 'default', 'comfortable'], defaults.density),
         contentLayout: allowed(source.contentLayout, ['full', 'centered'], defaults.contentLayout),
         customAccent: normalizeHex(source.customAccent, defaults.customAccent),
@@ -316,7 +322,7 @@
       root.setAttribute('data-cts-preset', state.preset);
       root.setAttribute('data-cts-radius', state.radius);
       root.setAttribute('data-cts-density', state.density);
-      root.setAttribute('data-cts-font', 'jetbrains-mono');
+      root.setAttribute('data-cts-font', state.font);
       root.setAttribute('data-cts-layout', state.contentLayout);
       root.setAttribute('data-cpamp-theme-studio', 'active');
       applyPalette();
@@ -327,8 +333,10 @@
     var themeCSS = String.raw`
 @font-face{font-family:'JetBrains Mono';src:url('${fontRegularURL}') format('woff2');font-style:normal;font-weight:400;font-display:swap}
 @font-face{font-family:'JetBrains Mono';src:url('${fontSemiBoldURL}') format('woff2');font-style:normal;font-weight:600;font-display:swap}
-:root[data-cts-font='jetbrains-mono']{--app-font-family:'JetBrains Mono','PingFang SC','Microsoft YaHei',monospace;font-family:var(--app-font-family)}
-:root[data-cts-font='jetbrains-mono'] body,:root[data-cts-font='jetbrains-mono'] button,:root[data-cts-font='jetbrains-mono'] input,:root[data-cts-font='jetbrains-mono'] textarea,:root[data-cts-font='jetbrains-mono'] select{font-family:var(--app-font-family)}
+:root[data-cts-font='jetbrains-mono']{--cts-theme-font-family:'JetBrains Mono','PingFang SC','Microsoft YaHei',monospace}
+:root[data-cts-font='system']{--cts-theme-font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif}
+:root[data-cts-font='jetbrains-mono'],:root[data-cts-font='system']{--app-font-family:var(--cts-theme-font-family);--cts-studio-font-family:var(--cts-theme-font-family);font-family:var(--cts-theme-font-family)}
+:root[data-cts-font='jetbrains-mono'] body,:root[data-cts-font='jetbrains-mono'] button,:root[data-cts-font='jetbrains-mono'] input,:root[data-cts-font='jetbrains-mono'] textarea,:root[data-cts-font='jetbrains-mono'] select,:root[data-cts-font='system'] body,:root[data-cts-font='system'] button,:root[data-cts-font='system'] input,:root[data-cts-font='system'] textarea,:root[data-cts-font='system'] select{font-family:var(--cts-theme-font-family)}
 :root[data-cts-preset]:not([data-cts-preset='cpamp']) {
   --app-bg: var(--cts-bg-light); --app-bg-gradient:linear-gradient(125deg,color-mix(in srgb,var(--cts-primary) 9%,var(--cts-bg-light)),var(--cts-bg-light) 52%,color-mix(in srgb,var(--cts-secondary) 10%,var(--cts-bg-light)));
   --app-bg-blob-1-start:var(--cts-primary); --app-bg-blob-1-end:color-mix(in srgb,var(--cts-primary) 45%,#fff); --app-bg-blob-2-start:var(--cts-secondary); --app-bg-blob-2-end:color-mix(in srgb,var(--cts-secondary) 44%,#fff);
@@ -358,12 +366,12 @@
 `;
 
     var studioCSS = String.raw`
-:host{all:initial;font-family:'JetBrains Mono','PingFang SC','Microsoft YaHei',monospace;color:var(--app-text-primary,#202a38)}
+:host{all:initial;font-family:var(--cts-studio-font-family,var(--app-font-family,'JetBrains Mono','PingFang SC','Microsoft YaHei',monospace));color:var(--app-text-primary,#202a38)}
 *,*::before,*::after{box-sizing:border-box}
-.ts-stage{position:fixed;inset:0;z-index:2147483001;display:grid;grid-template-columns:1fr min(460px,100vw)}.ts-stage[hidden]{display:none}.ts-scrim{grid-area:1/1/2/3;border:0;background:rgba(5,10,20,.54);backdrop-filter:blur(2px);cursor:default}.ts-deck{grid-area:1/2;position:relative;display:flex;min-width:0;flex-direction:column;height:100%;background:var(--app-surface-strong,#fff);border-left:1px solid var(--app-border-strong,rgba(15,23,42,.16));box-shadow:-26px 0 70px rgba(5,10,20,.22);animation:ts-enter .22s cubic-bezier(.22,1,.36,1) both}
-.ts-accent{height:5px;background:linear-gradient(90deg,var(--primary-color,#3b82f6),color-mix(in srgb,var(--primary-color,#3b82f6) 35%,#f0abfc))}.ts-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:20px 22px 16px;border-bottom:1px solid var(--app-border,rgba(15,23,42,.09))}.ts-head h2{margin:0 0 5px;font-size:19px;line-height:1.2}.ts-head p{margin:0;color:var(--app-text-muted,#778397);font-size:12px;line-height:1.45}.ts-close{width:44px;height:44px;flex:0 0 44px;border:0;border-radius:11px;background:transparent;color:inherit;font-size:20px;cursor:pointer;touch-action:manipulation}.ts-close:hover{background:var(--app-accent-soft,rgba(59,130,246,.1))}.ts-scope{margin:14px 22px 0;padding:9px 11px;border:1px solid var(--app-border,rgba(15,23,42,.09));border-radius:10px;background:var(--surface-subtle,rgba(15,23,42,.035));color:var(--app-text-regular,#5d6a7c);font-size:11px;line-height:1.4}
-.ts-body{flex:1;overflow:auto;padding:4px 22px 26px;overscroll-behavior:contain}.ts-section{padding:20px 0;border-bottom:1px solid var(--app-border,rgba(15,23,42,.09))}.ts-section:last-child{border-bottom:0}.ts-section h3{margin:0 0 12px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--app-text-regular,#5d6a7c)}.ts-grid{display:grid;gap:8px}.ts-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}.ts-grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.ts-grid-5{grid-template-columns:repeat(5,minmax(0,1fr))}.ts-button{min-width:0;min-height:44px;padding:8px;border:1px solid var(--app-border,rgba(15,23,42,.1));border-radius:11px;background:var(--app-surface-muted,rgba(255,255,255,.7));color:var(--app-text-regular,#566477);font:600 11px/1.25 inherit;cursor:pointer;touch-action:manipulation;transition:border-color .14s ease,background .14s ease,color .14s ease}.ts-button:hover{border-color:color-mix(in srgb,var(--primary-color,#3b82f6) 38%,transparent);color:var(--app-text-primary,#202a38)}.ts-button[aria-pressed='true']{border-color:var(--primary-color,#3b82f6);background:color-mix(in srgb,var(--primary-color,#3b82f6) 9%,var(--app-surface-strong,#fff));color:var(--primary-color,#3b82f6)}
-.ts-preset{display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:9px;min-height:56px;text-align:left}.ts-swatches{display:flex;width:34px;height:30px;overflow:hidden;border:1px solid rgba(127,127,127,.22);border-radius:8px}.ts-swatches i{flex:1}.ts-preset span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ts-custom{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px}.ts-custom input{width:38px;height:32px;padding:2px;border:1px solid var(--app-border-strong,rgba(15,23,42,.15));border-radius:8px;background:transparent;cursor:pointer}.ts-radius{display:block;width:26px;height:18px;margin:0 auto 5px;border:2px solid currentColor}.ts-radius-sm{border-radius:3px}.ts-radius-md{border-radius:6px}.ts-radius-lg{border-radius:10px}.ts-radius-xl{border-radius:15px}.ts-layout{min-height:62px}.ts-footer{padding:13px 22px;border-top:1px solid var(--app-border,rgba(15,23,42,.09))}.ts-reset{width:100%;min-height:42px}.ts-button:focus-visible,.ts-close:focus-visible,input:focus-visible{outline:2px solid var(--primary-color,#3b82f6);outline-offset:2px}
+.ts-stage{position:fixed;inset:0;z-index:2147483001;display:grid;grid-template-columns:1fr min(460px,100vw);height:100vh;height:100dvh;min-height:0;overflow:hidden}.ts-stage[hidden]{display:none}.ts-scrim{grid-area:1/1/2/3;border:0;background:rgba(5,10,20,.54);backdrop-filter:blur(2px);cursor:default}.ts-deck{grid-area:1/2;position:relative;display:flex;min-width:0;min-height:0;flex-direction:column;height:100%;max-height:100vh;max-height:100dvh;overflow:hidden;background:var(--app-surface-strong,#fff);border-left:1px solid var(--app-border-strong,rgba(15,23,42,.16));box-shadow:-26px 0 70px rgba(5,10,20,.22);animation:ts-enter .22s cubic-bezier(.22,1,.36,1) both}
+.ts-accent{height:5px;flex:none;background:linear-gradient(90deg,var(--primary-color,#3b82f6),color-mix(in srgb,var(--primary-color,#3b82f6) 35%,#f0abfc))}.ts-head{display:flex;flex:none;align-items:flex-start;justify-content:space-between;gap:18px;padding:20px 22px 16px;border-bottom:1px solid var(--app-border,rgba(15,23,42,.09))}.ts-head h2{margin:0 0 5px;font-size:19px;line-height:1.2}.ts-head p{margin:0;color:var(--app-text-muted,#778397);font-size:12px;line-height:1.45}.ts-close{width:44px;height:44px;flex:0 0 44px;border:0;border-radius:11px;background:transparent;color:inherit;font-size:20px;cursor:pointer;touch-action:manipulation}.ts-close:hover{background:var(--app-accent-soft,rgba(59,130,246,.1))}.ts-scope{flex:none;margin:14px 22px 0;padding:9px 11px;border:1px solid var(--app-border,rgba(15,23,42,.09));border-radius:10px;background:var(--surface-subtle,rgba(15,23,42,.035));color:var(--app-text-regular,#5d6a7c);font-size:11px;line-height:1.4}
+.ts-body{flex:1 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto;padding:4px 22px 26px;overscroll-behavior:contain;scrollbar-gutter:stable}.ts-section{padding:20px 0;border-bottom:1px solid var(--app-border,rgba(15,23,42,.09))}.ts-section:last-child{border-bottom:0}.ts-section h3{margin:0 0 12px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--app-text-regular,#5d6a7c)}.ts-grid{display:grid;gap:8px}.ts-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}.ts-grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.ts-grid-5{grid-template-columns:repeat(5,minmax(0,1fr))}.ts-button{min-width:0;min-height:44px;padding:8px;border:1px solid var(--app-border,rgba(15,23,42,.1));border-radius:11px;background:var(--app-surface-muted,rgba(255,255,255,.7));color:var(--app-text-regular,#566477);font:600 11px/1.25 inherit;cursor:pointer;touch-action:manipulation;transition:border-color .14s ease,background .14s ease,color .14s ease}.ts-button:hover{border-color:color-mix(in srgb,var(--primary-color,#3b82f6) 38%,transparent);color:var(--app-text-primary,#202a38)}.ts-button[aria-pressed='true']{border-color:var(--primary-color,#3b82f6);background:color-mix(in srgb,var(--primary-color,#3b82f6) 9%,var(--app-surface-strong,#fff));color:var(--primary-color,#3b82f6)}.ts-font-host{font-family:var(--app-font-family,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif)}.ts-font-jetbrains{font-family:'JetBrains Mono','PingFang SC','Microsoft YaHei',monospace}.ts-font-system{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif}
+.ts-preset{display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:9px;min-height:56px;text-align:left}.ts-swatches{display:flex;width:34px;height:30px;overflow:hidden;border:1px solid rgba(127,127,127,.22);border-radius:8px}.ts-swatches i{flex:1}.ts-preset span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ts-custom{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px}.ts-custom input{width:38px;height:32px;padding:2px;border:1px solid var(--app-border-strong,rgba(15,23,42,.15));border-radius:8px;background:transparent;cursor:pointer}.ts-radius{display:block;width:26px;height:18px;margin:0 auto 5px;border:2px solid currentColor}.ts-radius-sm{border-radius:3px}.ts-radius-md{border-radius:6px}.ts-radius-lg{border-radius:10px}.ts-radius-xl{border-radius:15px}.ts-layout{min-height:62px}.ts-footer{flex:none;padding:13px 22px;border-top:1px solid var(--app-border,rgba(15,23,42,.09))}.ts-reset{width:100%;min-height:42px}.ts-button:focus-visible,.ts-close:focus-visible,input:focus-visible{outline:2px solid var(--primary-color,#3b82f6);outline-offset:2px}
 @keyframes ts-enter{from{opacity:.5;transform:translateX(28px)}}@media(max-width:560px){.ts-stage{grid-template-columns:1fr}.ts-scrim,.ts-deck{grid-area:1/1}.ts-deck{border-left:0}.ts-head{padding:17px 16px 14px}.ts-scope{margin-inline:16px}.ts-body{padding-inline:16px}.ts-footer{padding:11px 16px}.ts-grid-2{grid-template-columns:1fr}.ts-grid-5{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(prefers-reduced-motion:reduce){.ts-deck{animation:none}}
 `;
 
@@ -410,6 +418,7 @@
         '<section class="ts-section"><h3>' + tr('palette') + '</h3><div class="ts-grid ts-grid-2">' + presets + '<label class="ts-button ts-custom" data-custom-label><span>' + tr('custom') + '</span><input type="color" data-action="custom" aria-label="' + tr('custom') + '"></label></div></section>' +
         '<section class="ts-section"><h3>' + tr('radius') + '</h3><div class="ts-grid ts-grid-5">' +
         button('radius','default',tr('normal'),'','<i class="ts-radius ts-radius-md"></i>') + button('radius','none',tr('square'),'','<i class="ts-radius"></i>') + button('radius','sm',tr('small'),'','<i class="ts-radius ts-radius-sm"></i>') + button('radius','md',tr('medium'),'','<i class="ts-radius ts-radius-md"></i>') + button('radius','lg',tr('large'),'','<i class="ts-radius ts-radius-lg"></i>') + button('radius','xl',tr('xlarge'),'','<i class="ts-radius ts-radius-xl"></i>') + '</div></section>' +
+        '<section class="ts-section"><h3>' + tr('font') + '</h3><div class="ts-grid ts-grid-3">' + button('font','host',tr('hostFont'),'ts-font-host') + button('font','jetbrains-mono',tr('jetBrainsMono'),'ts-font-jetbrains') + button('font','system',tr('systemSans'),'ts-font-system') + '</div></section>' +
         '<section class="ts-section"><h3>' + tr('density') + '</h3><div class="ts-grid ts-grid-3">' + button('density','compact',tr('compact')) + button('density','default',tr('normal')) + button('density','comfortable',tr('comfortable')) + '</div></section>' +
         '<section class="ts-section"><h3>' + tr('layout') + '</h3><div class="ts-grid ts-grid-2">' + button('contentLayout','full',tr('full'),'ts-layout') + button('contentLayout','centered',tr('centered'),'ts-layout') + '</div></section>' +
         '<section class="ts-section"><h3>' + tr('effects') + '</h3><div class="ts-grid ts-grid-2">' + button('effects','full',tr('rich')) + button('effects','reduced',tr('efficient')) + '</div></section>' +

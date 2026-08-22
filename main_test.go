@@ -272,6 +272,11 @@ func TestLoaderRuntimeContract(t *testing.T) {
 		"ru:",
 		"prefers-reduced-motion",
 		"JetBrains Mono",
+		"button('font','host'",
+		"button('font','jetbrains-mono'",
+		"button('font','system'",
+		"min-height:0;overflow-x:hidden;overflow-y:auto",
+		"max-height:100dvh",
 		"event.composedPath",
 		"MutationObserver",
 		"getDebugState",
@@ -288,8 +293,8 @@ func TestLoaderRuntimeContract(t *testing.T) {
 	if strings.Contains(loader, "var hostConnected = hostWindow !== window || !window.parent") {
 		t.Fatal("standalone plugin resources must not be reported as an injected host panel")
 	}
-	if strings.Contains(loader, "button('font'") || strings.Contains(loader, "if (opened) return") {
-		t.Fatal("loader must not expose legacy font choices or rely on stale open-state guards")
+	if strings.Contains(loader, "if (opened) return") {
+		t.Fatal("loader must not rely on stale open-state guards")
 	}
 	if strings.Contains(loader, "ts-launcher") {
 		t.Fatal("loader must reuse CPAMP's native top-bar theme control instead of publishing a floating launcher")

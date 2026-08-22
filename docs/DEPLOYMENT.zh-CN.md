@@ -65,7 +65,7 @@ plugins:
 随后在 CPAMP 中执行：
 
 1. 打开“插件”→“插件商店”，确认自定义来源没有错误。
-2. 搜索 `CPAMP Theme Studio`，选择 Latest 或 `0.1.2` 这类明确版本。
+2. 搜索 `CPAMP Theme Studio`，选择 Latest 或 `0.1.3` 这类明确版本。
 3. 完成第三方插件确认并点击安装。
 4. 在安装结果中记录版本与实际 `path`，不要假定相对目录落在 CPA 可执行文件旁。
 5. 每次安装或升级后都要重启实际 CPA 服务。主题工作室的面板 watcher 属于进程内状态；CPA 热重载可能让退役版本存活到进程退出，导致新旧 loader 缓存版本交替写入。
@@ -106,7 +106,7 @@ unzip cpamp-theme-studio_<version>_<goos>_<goarch>.zip
 <CPA_HOME>/plugins/<goos>/<goarch>/cpamp-theme-studio.<dll|so|dylib>
 ```
 
-CPA 也接受 `cpamp-theme-studio-v0.1.2.dll` 这类带版本名。不要保留多个无版本文件副本。
+CPA 也接受 `cpamp-theme-studio-v0.1.3.dll` 这类带版本名。不要保留多个无版本文件副本。
 
 ## 5. 从源码构建
 
@@ -119,7 +119,7 @@ git clone https://github.com/Cec1c/cpamp-theme-studio.git
 Set-Location .\cpamp-theme-studio
 go test ./...
 node --check .\assets\loader.js
-.\scripts\package.ps1 -Version 0.1.2-dev
+.\scripts\package.ps1 -Version 0.1.3-dev
 ```
 
 Linux/macOS：
@@ -129,7 +129,7 @@ git clone https://github.com/Cec1c/cpamp-theme-studio.git
 cd cpamp-theme-studio
 go test ./...
 node --check assets/loader.js
-./scripts/package.sh 0.1.2-dev
+./scripts/package.sh 0.1.3-dev
 ```
 
 需要 Go 1.26+ 和本机 C 编译器。插件使用 CGO `c-shared`，应在与目标相同的系统/架构上构建。
@@ -222,7 +222,7 @@ curl -fsS 'http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio?a
 5. 启动 CPA，重新执行全部验证。
 6. 确认当前 CPAMP 面板仍只有一个标记块。
 
-升级到 `0.1.2` 时，先重启实际 CPA 进程，再刷新面板，并确认注入的 loader URL 以 `v=0.1.2` 结尾。浏览器主题偏好继续保留，悬浮启动器消失，CPAMP 右上角原生“主题”控件成为唯一入口。
+升级到 `0.1.3` 时，先重启实际 CPA 进程，再刷新面板，并确认注入的 loader URL 以 `v=0.1.3` 结尾。浏览器主题偏好继续保留，CPAMP 右上角原生“主题”控件仍是唯一入口，且“字体”和“界面密度”均可在可滚动编辑器中访问。
 
 CPAMP 更新面板不需要重装插件。`management.html` 被覆盖后，watcher 应在 `watch_seconds` 内恢复 loader。
 

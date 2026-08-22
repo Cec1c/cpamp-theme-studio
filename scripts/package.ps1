@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$Version = '0.1.2-dev',
+    [string]$Version = '0.1.3-dev',
     [string]$Target = ''
 )
 

@@ -1,6 +1,6 @@
 # CPAMP 主题工作室
 
-[English](README.md) · [部署文档](docs/DEPLOYMENT.zh-CN.md) · [Agent 部署手册](docs/AGENT_DEPLOYMENT.md) · [v0.1.2 发布说明](docs/RELEASE_NOTES_v0.1.2.md)
+[English](README.md) · [部署文档](docs/DEPLOYMENT.zh-CN.md) · [Agent 部署手册](docs/AGENT_DEPLOYMENT.md) · [v0.1.3 发布说明](docs/RELEASE_NOTES_v0.1.3.md)
 
 CPAMP 主题工作室是一个通过 CPAMP 插件市场交付的前端主题扩展，为可写的 [CPA Manager Plus](https://github.com/seakee/CPA-Manager-Plus) 面板增加可持久化的视觉主题编辑器。功能不再依赖 CPAMP 上游 PR，也不需要长期维护 CPAMP fork。
 
@@ -27,7 +27,7 @@ CPAMP 主题工作室是一个通过 CPAMP 插件市场交付的前端主题扩�
 - 自动、浅色、深色三种显示模式。
 - CPAMP 蓝及九套独立设计的配色。
 - 自定义强调色。
-- 六档圆角、三档界面密度，以及内置 JetBrains Mono 与中文回退字体。
+- 六档圆角、三档界面密度，以及可选的 CPAMP 默认、内置 JetBrains Mono 或系统无衬线字体。
 - 铺满或居中的桌面内容布局。
 - 完整视觉效果或性能优先模式。
 - 即时预览、本地持久化、旧偏好迁移、一键重置。
@@ -63,7 +63,7 @@ plugins:
 
 1. 打开 CPAMP 的“插件”→“插件商店”。
 2. 确认来源中出现 `raw.githubusercontent.com`，搜索 `CPAMP Theme Studio`。
-3. 选择 Latest 或 `0.1.2` 并安装；CPAMP/CPA 会下载清单固定的平台 Release 压缩包，校验商店清单携带的 SHA-256，把带版本号的动态库写到 `<dir>/<goos>/<goarch>/`，并创建启用配置。
+3. 选择 Latest 或 `0.1.3` 并安装；CPAMP/CPA 会下载清单固定的平台 Release 压缩包，校验商店清单携带的 SHA-256，把带版本号的动态库写到 `<dir>/<goos>/<goarch>/`，并创建启用配置。
 4. 每次安装或版本升级后都要重启实际运行的 CPA 服务；然后在“已安装插件”确认 `registered` 与 `effective enabled`。不要只依赖热重载：旧插件版本的面板 watcher 可能持续到进程退出。
 5. 回到 CPAMP 仪表盘，点击右上角操作区原有的“主题”控件；插件会替换该控件的点击行为，不再添加悬浮按钮。
 
@@ -120,15 +120,15 @@ plugins:
 Windows PowerShell：
 
 ```powershell
-.\scripts\build.ps1 -Version 0.1.2-dev
-.\scripts\package.ps1 -Version 0.1.2-dev
+.\scripts\build.ps1 -Version 0.1.3-dev
+.\scripts\package.ps1 -Version 0.1.3-dev
 ```
 
 Linux 或 macOS：
 
 ```bash
-./scripts/build.sh 0.1.2-dev
-./scripts/package.sh 0.1.2-dev
+./scripts/build.sh 0.1.3-dev
+./scripts/package.sh 0.1.3-dev
 ```
 
 动态库和压缩包输出到 `dist/`，不会提交进 Git。
@@ -155,6 +155,8 @@ Linux 或 macOS：
 - 连续 5 轮打开、换主题、X/遮罩/Escape 关闭；刷新并重新登录后再做 3 轮
 - mount、stage、宿主主题控件始终各 1 个，关闭后 body 滚动恢复，SPA 路由重入正常，侧栏入口为 0
 - JetBrains Mono Regular/SemiBold 资源响应及浏览器实际字体加载
+- CPAMP 默认、JetBrains Mono、系统无衬线三种字体切换及刷新持久化
+- 1280×720 与 375×667 下主题工作室可滚动，界面密度控件可达，且无持续横向溢出
 - 配色刷新持久化和 390×844 响应式布局
 - 面板被官方文件覆盖后的自动重注入
 - 热停用后精确恢复原始 CPAMP SHA-256

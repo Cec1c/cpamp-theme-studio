@@ -65,11 +65,11 @@ plugins:
 随后在 CPAMP 中执行：
 
 1. 打开“插件”→“插件商店”，确认自定义来源没有错误。
-2. 搜索 `CPAMP Theme Studio`，选择 Latest 或 `0.1.1` 这类明确版本。
+2. 搜索 `CPAMP Theme Studio`，选择 Latest 或 `0.1.2` 这类明确版本。
 3. 完成第三方插件确认并点击安装。
 4. 在安装结果中记录版本与实际 `path`，不要假定相对目录落在 CPA 可执行文件旁。
 5. 根据页面提示等待热重载或重启实际 CPA 服务。
-6. 在“已安装插件”中确认 `registered=true`、`effective_enabled=true`，再回到仪表盘使用右下角启动器；此版本不会出现 Theme Studio 侧栏项。
+6. 在“已安装插件”中确认 `registered=true`、`effective_enabled=true`，再回到仪表盘点击 CPAMP 右上角原有的“主题”控件；此版本不会出现悬浮按钮或 Theme Studio 侧栏项。
 
 只有同时满足“商店可发现、固定 SHA-256 校验通过、安装返回成功、实际文件路径正确、插件已注册、页面资源 200”才算市场链路成功。若市场安装失败，不要改用手工复制后宣称市场部署成功；先记录 CPAMP 响应与 CPA 日志，再按下一节做明确标注的手工回退。
 
@@ -106,7 +106,7 @@ unzip cpamp-theme-studio_<version>_<goos>_<goarch>.zip
 <CPA_HOME>/plugins/<goos>/<goarch>/cpamp-theme-studio.<dll|so|dylib>
 ```
 
-CPA 也接受 `cpamp-theme-studio-v0.1.1.dll` 这类带版本名。不要保留多个无版本文件副本。
+CPA 也接受 `cpamp-theme-studio-v0.1.2.dll` 这类带版本名。不要保留多个无版本文件副本。
 
 ## 5. 从源码构建
 
@@ -119,7 +119,7 @@ git clone https://github.com/Cec1c/cpamp-theme-studio.git
 Set-Location .\cpamp-theme-studio
 go test ./...
 node --check .\assets\loader.js
-.\scripts\package.ps1 -Version 0.1.1-dev
+.\scripts\package.ps1 -Version 0.1.2-dev
 ```
 
 Linux/macOS：
@@ -129,7 +129,7 @@ git clone https://github.com/Cec1c/cpamp-theme-studio.git
 cd cpamp-theme-studio
 go test ./...
 node --check assets/loader.js
-./scripts/package.sh 0.1.1-dev
+./scripts/package.sh 0.1.2-dev
 ```
 
 需要 Go 1.26+ 和本机 C 编译器。插件使用 CGO `c-shared`，应在与目标相同的系统/架构上构建。
@@ -197,12 +197,12 @@ curl -fsS 'http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio?a
 
 再用浏览器确认：
 
-- 右下角出现主题工作室按钮。
-- 左侧没有 `Theme Studio` 菜单；右下角悬浮按钮是唯一入口。
+- CPAMP 右上角原有的“主题”控件被标记为主题工作室对话框入口，并保留原生按钮样式。
+- 左侧没有 `Theme Studio` 菜单，也不会创建悬浮启动器。
 - 编辑器能反复打开、切换主题，并通过 X、遮罩和 Escape 关闭，键盘焦点能够恢复。
 - 切换配色后刷新仍保持。
 - 浏览器计算字体以 `JetBrains Mono` 开头，两个内置字重都加载成功。
-- 每轮都只有一个 mount、启动器和 stage，关闭后 `body` overflow 恢复。
+- 每轮都只有一个 mount、宿主“主题”控件和 stage，关闭后 `body` overflow 恢复。
 - 浏览器开发者工具没有主题插件报错。
 - 文件中 start/end 标记各且仅有一个。
 
@@ -222,7 +222,7 @@ curl -fsS 'http://127.0.0.1:8317/v0/resource/plugins/cpamp-theme-studio/studio?a
 5. 启动 CPA，重新执行全部验证。
 6. 确认当前 CPAMP 面板仍只有一个标记块。
 
-从 `0.1.0` 升级到 `0.1.1` 时，CPA 启动后刷新一次面板。旧的插件页/侧栏入口应消失，浏览器主题偏好继续保留，右下角启动器成为唯一入口。
+升级到 `0.1.2` 时，CPA 启动后刷新一次面板。浏览器主题偏好继续保留，悬浮启动器消失，CPAMP 右上角原生“主题”控件成为唯一入口。
 
 CPAMP 更新面板不需要重装插件。`management.html` 被覆盖后，watcher 应在 `watch_seconds` 内恢复 loader。
 

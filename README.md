@@ -1,6 +1,6 @@
 # CPAMP Theme Studio
 
-[简体中文](README.zh-CN.md) · [Deployment](docs/DEPLOYMENT.md) · [Agent runbook](docs/AGENT_DEPLOYMENT.md) · [v0.1.1 notes](docs/RELEASE_NOTES_v0.1.1.md)
+[简体中文](README.zh-CN.md) · [Deployment](docs/DEPLOYMENT.md) · [Agent runbook](docs/AGENT_DEPLOYMENT.md) · [v0.1.2 notes](docs/RELEASE_NOTES_v0.1.2.md)
 
 CPAMP Theme Studio is a frontend theme extension delivered through the CPAMP Plugin Store. It adds a persistent visual theme editor to a writable [CPA Manager Plus](https://github.com/seakee/CPA-Manager-Plus) panel without an upstream pull request or a long-lived CPAMP fork.
 
@@ -33,7 +33,7 @@ Future CPA and CPAMP versions are expected to work while their plugin ABI and si
 - Immediate preview, local persistence, legacy preference migration, and one-click reset.
 - Simplified Chinese, Traditional Chinese, English, and Russian UI.
 - Shadow DOM isolation, keyboard focus handling, reduced-motion support, and mobile layout.
-- A single lower-right launcher; no redundant plugin-page/sidebar entry.
+- Reuses CPAMP's native top-right Theme control as the single entry point; no floating or sidebar duplicate.
 - Idempotent runtime recovery and reinjection after SPA or upstream panel updates.
 - Deterministic cleanup on hot disable; normal process-shutdown cleanup is best effort.
 
@@ -63,9 +63,9 @@ After saving and reloading the configuration:
 
 1. Open CPAMP, then Plugins → Plugin Store.
 2. Confirm that the sources include `raw.githubusercontent.com` and search for `CPAMP Theme Studio`.
-3. Choose Latest or `0.1.1` and install it. CPAMP/CPA downloads the matching pinned Release archive, verifies the SHA-256 carried by the store registry, writes a versioned library under `<dir>/<goos>/<goarch>/`, and creates the enabled plugin configuration.
+3. Choose Latest or `0.1.2` and install it. CPAMP/CPA downloads the matching pinned Release archive, verifies the SHA-256 carried by the store registry, writes a versioned library under `<dir>/<goos>/<goarch>/`, and creates the enabled plugin configuration.
 4. Restart the effective CPA service if prompted, then confirm `registered` and `effective enabled` on Installed Plugins.
-5. Return to the CPAMP dashboard; the only Theme Studio entry is the launcher in the lower-right corner.
+5. Return to the CPAMP dashboard and click the existing Theme control in the top-right action row. The plugin replaces that control's behavior without adding another floating button.
 
 The hidden read-only resource used by the injected loader and bundled fonts is:
 
@@ -120,15 +120,15 @@ Requirements: Go 1.26+, a native C compiler for CGO, and optionally Node.js 24+ 
 Windows PowerShell:
 
 ```powershell
-.\scripts\build.ps1 -Version 0.1.1-dev
-.\scripts\package.ps1 -Version 0.1.1-dev
+.\scripts\build.ps1 -Version 0.1.2-dev
+.\scripts\package.ps1 -Version 0.1.2-dev
 ```
 
 Linux or macOS:
 
 ```bash
-./scripts/build.sh 0.1.1-dev
-./scripts/package.sh 0.1.1-dev
+./scripts/build.sh 0.1.2-dev
+./scripts/package.sh 0.1.2-dev
 ```
 
 Generated libraries and archives are placed under `dist/` and are not committed.
@@ -153,7 +153,7 @@ Before stopping CPA for an upgrade, rollback, or uninstall, hot-disable this plu
 - CPA v7.2.138 real plugin discovery, registration, hidden-menu contract, and resource responses on Windows/amd64 and Linux/amd64
 - CPAMP v1.12.2 official panel checksum and injection
 - Five consecutive open/change/close cycles using X, scrim, and Escape; three more cycles after reload and login
-- Exact singleton mount/launcher/stage counts, body-scroll restoration, SPA route re-entry, and zero sidebar entries
+- Exact singleton mount/stage/host-control counts, body-scroll restoration, SPA route re-entry, and zero sidebar entries
 - JetBrains Mono Regular/SemiBold resource responses and successful browser font loading
 - Palette persistence across reload and 390×844 responsive layout
 - Panel overwrite followed by automatic reinjection

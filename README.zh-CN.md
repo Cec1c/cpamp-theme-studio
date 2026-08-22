@@ -1,6 +1,6 @@
 # CPAMP 主题工作室
 
-[English](README.md) · [部署文档](docs/DEPLOYMENT.zh-CN.md) · [Agent 部署手册](docs/AGENT_DEPLOYMENT.md) · [v0.1.1 发布说明](docs/RELEASE_NOTES_v0.1.1.md)
+[English](README.md) · [部署文档](docs/DEPLOYMENT.zh-CN.md) · [Agent 部署手册](docs/AGENT_DEPLOYMENT.md) · [v0.1.2 发布说明](docs/RELEASE_NOTES_v0.1.2.md)
 
 CPAMP 主题工作室是一个通过 CPAMP 插件市场交付的前端主题扩展，为可写的 [CPA Manager Plus](https://github.com/seakee/CPA-Manager-Plus) 面板增加可持久化的视觉主题编辑器。功能不再依赖 CPAMP 上游 PR，也不需要长期维护 CPAMP fork。
 
@@ -33,7 +33,7 @@ CPAMP 主题工作室是一个通过 CPAMP 插件市场交付的前端主题扩�
 - 即时预览、本地持久化、旧偏好迁移、一键重置。
 - 简体中文、繁体中文、英语、俄语。
 - Shadow DOM 隔离、键盘焦点处理、减少动画支持和移动端布局。
-- 只保留右下角一个启动入口，不再生成重复的插件页/侧栏菜单。
+- 复用 CPAMP 右上角原生“主题”控件作为唯一入口，不再生成悬浮按钮或插件页/侧栏菜单。
 - SPA 重入和 CPAMP 更新覆盖面板后的幂等运行时恢复与重注入。
 - 热停用时确定性清理；进程正常关闭时仅尽力清理。
 
@@ -63,9 +63,9 @@ plugins:
 
 1. 打开 CPAMP 的“插件”→“插件商店”。
 2. 确认来源中出现 `raw.githubusercontent.com`，搜索 `CPAMP Theme Studio`。
-3. 选择 Latest 或 `0.1.1` 并安装；CPAMP/CPA 会下载清单固定的平台 Release 压缩包，校验商店清单携带的 SHA-256，把带版本号的动态库写到 `<dir>/<goos>/<goarch>/`，并创建启用配置。
+3. 选择 Latest 或 `0.1.2` 并安装；CPAMP/CPA 会下载清单固定的平台 Release 压缩包，校验商店清单携带的 SHA-256，把带版本号的动态库写到 `<dir>/<goos>/<goarch>/`，并创建启用配置。
 4. 若页面提示重启，重启实际运行的 CPA 服务；然后在“已安装插件”确认 `registered` 与 `effective enabled`。
-5. 回到 CPAMP 仪表盘；主题工作室唯一入口应是右下角按钮。
+5. 回到 CPAMP 仪表盘，点击右上角操作区原有的“主题”控件；插件会替换该控件的点击行为，不再添加悬浮按钮。
 
 注入 loader 和内置字体使用的隐藏只读资源为：
 
@@ -120,15 +120,15 @@ plugins:
 Windows PowerShell：
 
 ```powershell
-.\scripts\build.ps1 -Version 0.1.1-dev
-.\scripts\package.ps1 -Version 0.1.1-dev
+.\scripts\build.ps1 -Version 0.1.2-dev
+.\scripts\package.ps1 -Version 0.1.2-dev
 ```
 
 Linux 或 macOS：
 
 ```bash
-./scripts/build.sh 0.1.1-dev
-./scripts/package.sh 0.1.1-dev
+./scripts/build.sh 0.1.2-dev
+./scripts/package.sh 0.1.2-dev
 ```
 
 动态库和压缩包输出到 `dist/`，不会提交进 Git。
@@ -153,7 +153,7 @@ Linux 或 macOS：
 - Windows/amd64 和 Linux/amd64 上的 CPA v7.2.138 真实插件发现、注册、隐藏菜单契约和资源响应
 - CPAMP v1.12.2 官方面板校验与注入
 - 连续 5 轮打开、换主题、X/遮罩/Escape 关闭；刷新并重新登录后再做 3 轮
-- mount、启动器、stage 始终各 1 个，关闭后 body 滚动恢复，SPA 路由重入正常，侧栏入口为 0
+- mount、stage、宿主主题控件始终各 1 个，关闭后 body 滚动恢复，SPA 路由重入正常，侧栏入口为 0
 - JetBrains Mono Regular/SemiBold 资源响应及浏览器实际字体加载
 - 配色刷新持久化和 390×844 响应式布局
 - 面板被官方文件覆盖后的自动重注入

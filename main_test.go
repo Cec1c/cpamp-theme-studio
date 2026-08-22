@@ -275,6 +275,11 @@ func TestLoaderRuntimeContract(t *testing.T) {
 		"event.composedPath",
 		"MutationObserver",
 		"getDebugState",
+		"bindHostThemeControl",
+		"handleHostControlClick",
+		"stopImmediatePropagation",
+		"data-cpamp-theme-studio-trigger",
+		"doc.querySelectorAll('button')",
 	} {
 		if !strings.Contains(loader, required) {
 			t.Fatalf("loader is missing runtime contract %q", required)
@@ -285,5 +290,8 @@ func TestLoaderRuntimeContract(t *testing.T) {
 	}
 	if strings.Contains(loader, "button('font'") || strings.Contains(loader, "if (opened) return") {
 		t.Fatal("loader must not expose legacy font choices or rely on stale open-state guards")
+	}
+	if strings.Contains(loader, "ts-launcher") {
+		t.Fatal("loader must reuse CPAMP's native top-bar theme control instead of publishing a floating launcher")
 	}
 }

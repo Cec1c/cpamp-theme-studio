@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-version="${1:-0.1.1-dev}"
+version="${1:-0.1.2-dev}"
 target="${2:-$(go env GOHOSTOS)-$(go env GOHOSTARCH)}"
 version="${version#v}"
 

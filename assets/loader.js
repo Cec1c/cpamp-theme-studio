@@ -71,6 +71,7 @@
     var mount = null;
     var shadow = null;
     var observer = null;
+    var hostThemeControl = null;
     var remountScheduled = false;
     var openRequested = Boolean(shouldOpen);
     var previousOverflow = '';
@@ -163,6 +164,17 @@
     var language = detectLanguage();
     var state = readState();
     var hostConnected = hostWindow !== window || Boolean(script && script.hasAttribute && script.hasAttribute('data-cpamp-theme-studio-loader'));
+    var hostThemeLabels = {
+      theme: true,
+      '主题': true,
+      '主題': true,
+      'тема': true,
+      'open theme studio': true,
+      '打开主题工作室': true,
+      '開啟主題工作室': true,
+      'открыть студию темы': true,
+      'открыть студию тем': true
+    };
 
     function tr(key) {
       return (copy[language] && copy[language][key]) || copy.en[key] || key;
@@ -347,12 +359,12 @@
 
     var studioCSS = String.raw`
 :host{all:initial;font-family:'JetBrains Mono','PingFang SC','Microsoft YaHei',monospace;color:var(--app-text-primary,#202a38)}
-*,*::before,*::after{box-sizing:border-box}.ts-launcher{position:fixed;right:18px;bottom:18px;z-index:2147483000;width:46px;height:46px;display:grid;place-items:center;border:1px solid var(--app-border-strong,rgba(15,23,42,.16));border-radius:15px;background:var(--app-surface-strong,#fff);color:var(--primary-color,#3b82f6);box-shadow:0 14px 38px rgba(15,23,42,.2);cursor:pointer;touch-action:manipulation;transition:transform .16s ease,box-shadow .16s ease}.ts-launcher:hover{transform:translateY(-2px);box-shadow:0 18px 44px rgba(15,23,42,.24)}.ts-launcher svg{width:23px;height:23px}
+*,*::before,*::after{box-sizing:border-box}
 .ts-stage{position:fixed;inset:0;z-index:2147483001;display:grid;grid-template-columns:1fr min(460px,100vw)}.ts-stage[hidden]{display:none}.ts-scrim{grid-area:1/1/2/3;border:0;background:rgba(5,10,20,.54);backdrop-filter:blur(2px);cursor:default}.ts-deck{grid-area:1/2;position:relative;display:flex;min-width:0;flex-direction:column;height:100%;background:var(--app-surface-strong,#fff);border-left:1px solid var(--app-border-strong,rgba(15,23,42,.16));box-shadow:-26px 0 70px rgba(5,10,20,.22);animation:ts-enter .22s cubic-bezier(.22,1,.36,1) both}
 .ts-accent{height:5px;background:linear-gradient(90deg,var(--primary-color,#3b82f6),color-mix(in srgb,var(--primary-color,#3b82f6) 35%,#f0abfc))}.ts-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:20px 22px 16px;border-bottom:1px solid var(--app-border,rgba(15,23,42,.09))}.ts-head h2{margin:0 0 5px;font-size:19px;line-height:1.2}.ts-head p{margin:0;color:var(--app-text-muted,#778397);font-size:12px;line-height:1.45}.ts-close{width:44px;height:44px;flex:0 0 44px;border:0;border-radius:11px;background:transparent;color:inherit;font-size:20px;cursor:pointer;touch-action:manipulation}.ts-close:hover{background:var(--app-accent-soft,rgba(59,130,246,.1))}.ts-scope{margin:14px 22px 0;padding:9px 11px;border:1px solid var(--app-border,rgba(15,23,42,.09));border-radius:10px;background:var(--surface-subtle,rgba(15,23,42,.035));color:var(--app-text-regular,#5d6a7c);font-size:11px;line-height:1.4}
 .ts-body{flex:1;overflow:auto;padding:4px 22px 26px;overscroll-behavior:contain}.ts-section{padding:20px 0;border-bottom:1px solid var(--app-border,rgba(15,23,42,.09))}.ts-section:last-child{border-bottom:0}.ts-section h3{margin:0 0 12px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--app-text-regular,#5d6a7c)}.ts-grid{display:grid;gap:8px}.ts-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}.ts-grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.ts-grid-5{grid-template-columns:repeat(5,minmax(0,1fr))}.ts-button{min-width:0;min-height:44px;padding:8px;border:1px solid var(--app-border,rgba(15,23,42,.1));border-radius:11px;background:var(--app-surface-muted,rgba(255,255,255,.7));color:var(--app-text-regular,#566477);font:600 11px/1.25 inherit;cursor:pointer;touch-action:manipulation;transition:border-color .14s ease,background .14s ease,color .14s ease}.ts-button:hover{border-color:color-mix(in srgb,var(--primary-color,#3b82f6) 38%,transparent);color:var(--app-text-primary,#202a38)}.ts-button[aria-pressed='true']{border-color:var(--primary-color,#3b82f6);background:color-mix(in srgb,var(--primary-color,#3b82f6) 9%,var(--app-surface-strong,#fff));color:var(--primary-color,#3b82f6)}
-.ts-preset{display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:9px;min-height:56px;text-align:left}.ts-swatches{display:flex;width:34px;height:30px;overflow:hidden;border:1px solid rgba(127,127,127,.22);border-radius:8px}.ts-swatches i{flex:1}.ts-preset span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ts-custom{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px}.ts-custom input{width:38px;height:32px;padding:2px;border:1px solid var(--app-border-strong,rgba(15,23,42,.15));border-radius:8px;background:transparent;cursor:pointer}.ts-radius{display:block;width:26px;height:18px;margin:0 auto 5px;border:2px solid currentColor}.ts-radius-sm{border-radius:3px}.ts-radius-md{border-radius:6px}.ts-radius-lg{border-radius:10px}.ts-radius-xl{border-radius:15px}.ts-layout{min-height:62px}.ts-footer{padding:13px 22px;border-top:1px solid var(--app-border,rgba(15,23,42,.09))}.ts-reset{width:100%;min-height:42px}.ts-launcher:focus-visible,.ts-button:focus-visible,.ts-close:focus-visible,input:focus-visible{outline:2px solid var(--primary-color,#3b82f6);outline-offset:2px}
-@keyframes ts-enter{from{opacity:.5;transform:translateX(28px)}}@media(max-width:560px){.ts-launcher{right:12px;bottom:12px}.ts-stage{grid-template-columns:1fr}.ts-scrim,.ts-deck{grid-area:1/1}.ts-deck{border-left:0}.ts-head{padding:17px 16px 14px}.ts-scope{margin-inline:16px}.ts-body{padding-inline:16px}.ts-footer{padding:11px 16px}.ts-grid-2{grid-template-columns:1fr}.ts-grid-5{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(prefers-reduced-motion:reduce){.ts-deck{animation:none}.ts-launcher{transition:none}}
+.ts-preset{display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:9px;min-height:56px;text-align:left}.ts-swatches{display:flex;width:34px;height:30px;overflow:hidden;border:1px solid rgba(127,127,127,.22);border-radius:8px}.ts-swatches i{flex:1}.ts-preset span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ts-custom{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px}.ts-custom input{width:38px;height:32px;padding:2px;border:1px solid var(--app-border-strong,rgba(15,23,42,.15));border-radius:8px;background:transparent;cursor:pointer}.ts-radius{display:block;width:26px;height:18px;margin:0 auto 5px;border:2px solid currentColor}.ts-radius-sm{border-radius:3px}.ts-radius-md{border-radius:6px}.ts-radius-lg{border-radius:10px}.ts-radius-xl{border-radius:15px}.ts-layout{min-height:62px}.ts-footer{padding:13px 22px;border-top:1px solid var(--app-border,rgba(15,23,42,.09))}.ts-reset{width:100%;min-height:42px}.ts-button:focus-visible,.ts-close:focus-visible,input:focus-visible{outline:2px solid var(--primary-color,#3b82f6);outline-offset:2px}
+@keyframes ts-enter{from{opacity:.5;transform:translateX(28px)}}@media(max-width:560px){.ts-stage{grid-template-columns:1fr}.ts-scrim,.ts-deck{grid-area:1/1}.ts-deck{border-left:0}.ts-head{padding:17px 16px 14px}.ts-scope{margin-inline:16px}.ts-body{padding-inline:16px}.ts-footer{padding:11px 16px}.ts-grid-2{grid-template-columns:1fr}.ts-grid-5{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(prefers-reduced-motion:reduce){.ts-deck{animation:none}}
 `;
 
     function ensureThemeStyle() {
@@ -380,10 +392,6 @@
       return [palettes[value][0], palettes[value][1]];
     }
 
-    function icon() {
-      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5h14v14H5z"/><path d="M8 2v4M16 2v4M8 18v4M16 18v4M2 8h4M18 8h4M2 16h4M18 16h4"/><circle cx="12" cy="12" r="3"/></svg>';
-    }
-
     function button(action, value, label, extra, inner) {
       return '<button type="button" class="ts-button ' + (extra || '') + '" data-action="' + action + '" data-value="' + value + '">' + (inner || '') + '<span>' + label + '</span></button>';
     }
@@ -395,8 +403,7 @@
 
     function markup() {
       var presets = presetOrder.map(presetButton).join('');
-      return '<button type="button" class="ts-launcher" aria-label="' + tr('open') + '" title="' + tr('open') + '">' + icon() + '</button>' +
-        '<div class="ts-stage" hidden><button type="button" class="ts-scrim" aria-label="' + tr('close') + '"></button><section class="ts-deck" role="dialog" aria-modal="true" aria-labelledby="ts-title"><div class="ts-accent"></div>' +
+      return '<div class="ts-stage" hidden><button type="button" class="ts-scrim" aria-label="' + tr('close') + '"></button><section class="ts-deck" role="dialog" aria-modal="true" aria-labelledby="ts-title"><div class="ts-accent"></div>' +
         '<header class="ts-head"><div><h2 id="ts-title">' + tr('title') + '</h2><p>' + tr('subtitle') + '</p></div><button type="button" class="ts-close" aria-label="' + tr('close') + '">×</button></header>' +
         '<div class="ts-scope">' + tr(hostConnected ? 'scopeHost' : 'scopeFrame') + '</div><div class="ts-body">' +
         '<section class="ts-section"><h3>' + tr('mode') + '</h3><div class="ts-grid ts-grid-3">' + button('mode','auto',tr('auto')) + button('mode','white',tr('light')) + button('mode','dark',tr('dark')) + '</div></section>' +
@@ -437,6 +444,51 @@
       return Boolean(stage && !stage.hidden);
     }
 
+    function normalizedControlLabel(value) {
+      return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+    }
+
+    function isHostThemeControl(control) {
+      if (!control || control.closest('#' + mountID)) return false;
+      if (control.getAttribute('data-cpamp-theme-studio-trigger') === 'true') return true;
+      var labels = [control.getAttribute('aria-label'), control.getAttribute('title')];
+      for (var index = 0; index < labels.length; index += 1) {
+        if (hostThemeLabels[normalizedControlLabel(labels[index])]) return true;
+      }
+      return false;
+    }
+
+    function findHostThemeControl() {
+      // CPAMP renders the login-page toolbar as a plain div, while authenticated
+      // layouts use a header-like action row. Match the accessible label instead
+      // of relying on a particular container so both surfaces keep working.
+      var controls = doc.querySelectorAll('button');
+      for (var index = 0; index < controls.length; index += 1) {
+        if (isHostThemeControl(controls[index])) return controls[index];
+      }
+      return null;
+    }
+
+    function syncHostThemeControl() {
+      if (!hostThemeControl || !hostThemeControl.isConnected) return;
+      hostThemeControl.setAttribute('data-cpamp-theme-studio-trigger', 'true');
+      hostThemeControl.setAttribute('title', tr('open'));
+      hostThemeControl.setAttribute('aria-label', tr('open'));
+      hostThemeControl.setAttribute('aria-haspopup', 'dialog');
+      hostThemeControl.setAttribute('aria-expanded', isOpen() ? 'true' : 'false');
+    }
+
+    function bindHostThemeControl() {
+      var control = findHostThemeControl();
+      if (!control) {
+        hostThemeControl = null;
+        return false;
+      }
+      hostThemeControl = control;
+      syncHostThemeControl();
+      return true;
+    }
+
     function lockBodyScroll() {
       if (!doc.body) return;
       if (overflowOwner === doc.body) {
@@ -456,27 +508,28 @@
       previousOverflow = '';
     }
 
-    function revealStage() {
+    function revealStage(focusOrigin) {
       var stage = stageElement();
       if (!stage) return false;
       if (stage.hidden) {
-        returnFocus = doc.activeElement;
+        returnFocus = focusOrigin && focusOrigin.isConnected ? focusOrigin : doc.activeElement;
         stage.hidden = false;
       }
       lockBodyScroll();
+      syncHostThemeControl();
       var closeButton = shadow.querySelector('.ts-close');
       if (closeButton) closeButton.focus();
       return true;
     }
 
-    function open() {
+    function open(focusOrigin) {
       openRequested = true;
       ensureThemeStyle();
       if (!ensureMounted()) {
         scheduleEnsure();
         return;
       }
-      revealStage();
+      revealStage(focusOrigin);
     }
 
     function close() {
@@ -484,9 +537,10 @@
       var stage = stageElement();
       if (stage) stage.hidden = true;
       releaseBodyScroll();
+      syncHostThemeControl();
 
       var focusTarget = returnFocus && returnFocus.isConnected ? returnFocus :
-        (isMounted() ? shadow.querySelector('.ts-launcher') : null);
+        (hostThemeControl && hostThemeControl.isConnected ? hostThemeControl : null);
       returnFocus = null;
       if (focusTarget && typeof focusTarget.focus === 'function') focusTarget.focus();
     }
@@ -508,7 +562,6 @@
     function handleClick(event) {
       var control = findInEventPath(event, 'button');
       if (!control) return;
-      if (control.classList.contains('ts-launcher')) return open();
       if (control.classList.contains('ts-close') || control.classList.contains('ts-scrim')) return close();
       var action = control.getAttribute('data-action');
       if (action === 'reset') return reset();
@@ -516,6 +569,16 @@
       if (!action || !value || !Object.prototype.hasOwnProperty.call(state, action)) return;
       state[action] = value;
       applyState();
+    }
+
+    function handleHostControlClick(event) {
+      var control = findInEventPath(event, 'button');
+      if (!isHostThemeControl(control)) return;
+      hostThemeControl = control;
+      syncHostThemeControl();
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      open(control);
     }
 
     function handleKey(event) {
@@ -553,6 +616,7 @@
     function ensureMounted() {
       if (!doc.body) return false;
       if (isMounted()) {
+        bindHostThemeControl();
         publishRuntime();
         return true;
       }
@@ -581,6 +645,7 @@
           applyState();
         }
       });
+      bindHostThemeControl();
       publishRuntime();
       refreshControls();
       if (openRequested) revealStage();
@@ -595,13 +660,14 @@
         remountScheduled = false;
         ensureThemeStyle();
         ensureMounted();
+        bindHostThemeControl();
       });
     }
 
     function watchHostDOM() {
       if (observer || !win.MutationObserver || !root) return;
       observer = new win.MutationObserver(function () {
-        if (!isMounted() || !doc.getElementById(styleID)) scheduleEnsure();
+        if (!isMounted() || !doc.getElementById(styleID) || !hostThemeControl || !hostThemeControl.isConnected) scheduleEnsure();
       });
       observer.observe(root, { childList: true, subtree: true });
     }
@@ -611,6 +677,7 @@
       ensure: function () {
         ensureThemeStyle();
         var ready = ensureMounted();
+        bindHostThemeControl();
         publishRuntime();
         return ready;
       },
@@ -625,7 +692,8 @@
           mountCount: doc.querySelectorAll('#' + mountID).length,
           overflowLocked: Boolean(overflowOwner),
           stageCount: isMounted() ? shadow.querySelectorAll('.ts-stage').length : 0,
-          launcherCount: isMounted() ? shadow.querySelectorAll('.ts-launcher').length : 0
+          hostControlCount: doc.querySelectorAll('[data-cpamp-theme-studio-trigger="true"]').length,
+          hostControlBound: Boolean(hostThemeControl && hostThemeControl.isConnected)
         };
       }
     };
@@ -635,6 +703,7 @@
     applyState();
     if (doc.body) ensureMounted();
     else doc.addEventListener('DOMContentLoaded', ensureMounted, { once: true });
+    doc.addEventListener('click', handleHostControlClick, true);
     doc.addEventListener('keydown', handleKey, true);
     watchHostDOM();
 

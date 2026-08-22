@@ -11,7 +11,7 @@ This release moves Theme Studio to the place CPAMP users already expect.
 - Rebinds the host control after SPA navigation or a CPAMP DOM refresh.
 - Retains saved palettes and all other browser-side preferences from v0.1.1.
 
-Upgrade through the CPAMP Plugin Store to `0.1.2`, refresh the panel once, and use the existing Theme button in the top-right action row.
+Upgrade through the CPAMP Plugin Store to `0.1.2`, restart the effective CPA process, refresh the panel once, and use the existing Theme button in the top-right action row. The restart is required because CPA hot reload can retain the previous version's panel watcher until process exit.
 
 ## 简体中文
 
@@ -24,4 +24,4 @@ Upgrade through the CPAMP Plugin Store to `0.1.2`, refresh the panel once, and u
 - SPA 跳转或 CPAMP DOM 刷新后会自动重新绑定宿主控件。
 - 保留 v0.1.1 的已存配色及其他浏览器偏好。
 
-通过 CPAMP 插件市场升级到 `0.1.2`，刷新面板一次，然后使用右上角操作区原有的“主题”按钮。
+通过 CPAMP 插件市场升级到 `0.1.2` 后，先重启实际 CPA 进程，再刷新面板一次，然后使用右上角操作区原有的“主题”按钮。必须重启，因为 CPA 热重载可能让旧版本的面板 watcher 持续到进程退出。

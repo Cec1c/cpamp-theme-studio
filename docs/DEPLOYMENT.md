@@ -68,7 +68,7 @@ Then use CPAMP:
 2. Search for `CPAMP Theme Studio` and choose Latest or a specific version such as `0.1.2`.
 3. Complete the third-party confirmation and install it.
 4. Record the returned version and actual `path`; never assume a relative directory is beside the CPA executable.
-5. Wait for hot reload or restart the effective CPA service when CPAMP requests it.
+5. Restart the effective CPA service after every install or upgrade. Theme Studio's panel watcher is process-local; CPA hot reload can leave the retired version alive until process exit, causing old and new loader cache keys to alternate.
 6. Confirm `registered=true` and `effective_enabled=true` under Installed Plugins, then return to the dashboard and click CPAMP's existing top-right Theme control. No floating or sidebar Theme Studio entry is expected.
 
 The store path passes only when discovery, pinned SHA-256 verification, installation, target path, registration, and the HTTP 200 resource check all succeed. If store installation fails, do not manually copy a library and report a successful store deployment. Capture the CPAMP response and CPA logs first; use the next section only as an explicitly reported manual fallback.
@@ -220,7 +220,7 @@ Do not use the marker alone as the health check; registration, resource response
 5. Start CPA and repeat all verification checks.
 6. Confirm the current CPAMP panel still has exactly one marker block.
 
-When upgrading to `0.1.2`, refresh the panel once after CPA starts. Existing browser preferences are retained, the floating launcher disappears, and CPAMP's native top-right Theme control becomes the single entry point.
+When upgrading to `0.1.2`, restart the effective CPA process first and then refresh the panel. Confirm that the injected loader URL ends in `v=0.1.2`; existing browser preferences are retained, the floating launcher disappears, and CPAMP's native top-right Theme control becomes the single entry point.
 
 Panel updates do not require reinstalling the plugin. If CPAMP replaces `management.html`, the watcher should restore the loader within `watch_seconds`.
 

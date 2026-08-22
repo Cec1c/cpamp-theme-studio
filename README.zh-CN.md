@@ -64,7 +64,7 @@ plugins:
 1. 打开 CPAMP 的“插件”→“插件商店”。
 2. 确认来源中出现 `raw.githubusercontent.com`，搜索 `CPAMP Theme Studio`。
 3. 选择 Latest 或 `0.1.2` 并安装；CPAMP/CPA 会下载清单固定的平台 Release 压缩包，校验商店清单携带的 SHA-256，把带版本号的动态库写到 `<dir>/<goos>/<goarch>/`，并创建启用配置。
-4. 若页面提示重启，重启实际运行的 CPA 服务；然后在“已安装插件”确认 `registered` 与 `effective enabled`。
+4. 每次安装或版本升级后都要重启实际运行的 CPA 服务；然后在“已安装插件”确认 `registered` 与 `effective enabled`。不要只依赖热重载：旧插件版本的面板 watcher 可能持续到进程退出。
 5. 回到 CPAMP 仪表盘，点击右上角操作区原有的“主题”控件；插件会替换该控件的点击行为，不再添加悬浮按钮。
 
 注入 loader 和内置字体使用的隐藏只读资源为：

@@ -82,6 +82,7 @@ plugins:
 [ ] GET .../studio?asset=loader returns 200 JavaScript with nosniff and cache headers
 [ ] GET .../studio?asset=font-regular and font-semibold return 200 font/woff2
 [ ] management.html has exactly one start marker and one end marker
+[ ] after any install or upgrade, the effective CPA process was restarted and the loader marker v= value exactly matches the installed plugin version
 [ ] CPAMP still reaches its login/dashboard, has no floating/sidebar Theme Studio item, and exposes the studio through the existing top-right Theme control
 [ ] top-right Theme control -> change theme -> X/scrim/Escape -> reopen succeeds repeatedly without duplicate mounts or stuck body overflow
 [ ] JetBrains Mono is loaded in the browser and one setting change persists after browser reload

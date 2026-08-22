@@ -64,7 +64,7 @@ After saving and reloading the configuration:
 1. Open CPAMP, then Plugins → Plugin Store.
 2. Confirm that the sources include `raw.githubusercontent.com` and search for `CPAMP Theme Studio`.
 3. Choose Latest or `0.1.2` and install it. CPAMP/CPA downloads the matching pinned Release archive, verifies the SHA-256 carried by the store registry, writes a versioned library under `<dir>/<goos>/<goarch>/`, and creates the enabled plugin configuration.
-4. Restart the effective CPA service if prompted, then confirm `registered` and `effective enabled` on Installed Plugins.
+4. Restart the effective CPA service after every install or version upgrade, then confirm `registered` and `effective enabled` on Installed Plugins. Do not rely on hot reload alone: a retired plugin version can keep its panel watcher alive until the process exits.
 5. Return to the CPAMP dashboard and click the existing Theme control in the top-right action row. The plugin replaces that control's behavior without adding another floating button.
 
 The hidden read-only resource used by the injected loader and bundled fonts is:

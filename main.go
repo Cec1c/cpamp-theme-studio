@@ -213,8 +213,8 @@ func handleMethod(method string, request []byte) ([]byte, error) {
 		return okEnvelope(managementRegistration{Resources: []managementResource{{
 			Path: "/studio",
 			// An empty Menu keeps the browser resource route available without
-			// publishing a redundant CPAMP sidebar entry. The injected floating
-			// launcher is the single user-facing entry point.
+			// publishing a redundant CPAMP sidebar entry. The loader reuses the
+			// native top-bar Theme control as the single user-facing entry point.
 			Menu:        "",
 			Description: "Customize CPAMP color, shape, density, typography, layout, and visual effects.",
 		}}})

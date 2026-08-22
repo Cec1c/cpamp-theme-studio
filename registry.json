@@ -6,7 +6,7 @@
       "name": "CPAMP Theme Studio",
       "description": "Adds a persistent multilingual visual theme editor to the CPAMP management panel. The feature is implemented in browser-side resources; a minimal CPA native bridge exposes it to the CPAMP plugin store and page container.",
       "author": "Cec1c",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "repository": "https://github.com/Cec1c/cpamp-theme-studio",
       "homepage": "https://github.com/Cec1c/cpamp-theme-studio",
       "license": "MIT",
@@ -21,44 +21,44 @@
           {
             "goos": "windows",
             "goarch": "amd64",
-            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.1.4/cpamp-theme-studio_0.1.4_windows_amd64.zip",
-            "sha256": "10c67960f22bb057f681135abf9c4ef6fb7089e4d917ff8e8f007d42ca1d6359",
-            "size": 2393534
+            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.1.5/cpamp-theme-studio_0.1.5_windows_amd64.zip",
+            "sha256": "e383ef3f38b5d659313134469f444d53303892ae0f74f0d527c0f396fc75d4a4",
+            "size": 2395699
           },
           {
             "goos": "windows",
             "goarch": "arm64",
-            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.1.4/cpamp-theme-studio_0.1.4_windows_arm64.zip",
-            "sha256": "8c7a6f5f32808933a4bfc1b5f78be92c4646bf970b6217a02829c208752c7218",
-            "size": 2348279
+            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.1.5/cpamp-theme-studio_0.1.5_windows_arm64.zip",
+            "sha256": "eec7c3706e3f5859fe4ded32a52ce7ac5a96bcac701b25947b6f66042fbfabd3",
+            "size": 2350350
           },
           {
             "goos": "linux",
             "goarch": "amd64",
-            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.1.4/cpamp-theme-studio_0.1.4_linux_amd64.zip",
-            "sha256": "d870513e8c5afdca3d3816cfb2c7429a725561c32cd94c88400b1df8732429cd",
-            "size": 2407670
+            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.1.5/cpamp-theme-studio_0.1.5_linux_amd64.zip",
+            "sha256": "490447b0e853950c14c1fbfc6274b725d7df5de8c00a0273af1c14bc100c9131",
+            "size": 2409705
           },
           {
             "goos": "linux",
             "goarch": "arm64",
-            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.1.4/cpamp-theme-studio_0.1.4_linux_arm64.zip",
-            "sha256": "c4137b5f30cae0e1d0c0993468b9fcdb5689fa422a43392bd6a1c7a476004695",
-            "size": 2212452
+            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.1.5/cpamp-theme-studio_0.1.5_linux_arm64.zip",
+            "sha256": "bac4ce3ba1cd3d9f1c332c1a135931155098abeba302cca0b8e5dcfcd09c4410",
+            "size": 2214473
           },
           {
             "goos": "darwin",
             "goarch": "amd64",
-            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.1.4/cpamp-theme-studio_0.1.4_darwin_amd64.zip",
-            "sha256": "5786afff1da496692477d656b5b813d6a5f5e103b6e963ae26e4c958d030b803",
-            "size": 2283734
+            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.1.5/cpamp-theme-studio_0.1.5_darwin_amd64.zip",
+            "sha256": "b83f28c69e2cb03049329406fabb36a3bdab6276e23e75a64ed39525048c597a",
+            "size": 2285698
           },
           {
             "goos": "darwin",
             "goarch": "arm64",
-            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.1.4/cpamp-theme-studio_0.1.4_darwin_arm64.zip",
-            "sha256": "5d4bb5a6f5a7e98a68c034c06b53ef14b51f12b449c78b7bb9443710d5790ec3",
-            "size": 2131328
+            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.1.5/cpamp-theme-studio_0.1.5_darwin_arm64.zip",
+            "sha256": "84fe0360b691be4551c3175761a97b0333c6683ec098f7e816586eed649ad8cc",
+            "size": 2133417
           }
         ]
       }

@@ -1,59 +1,82 @@
+<div align="center">
+
 # CPAMP Theme Studio
 
-[简体中文](README.zh-CN.md) · [Linux bootstrap](docs/BOOTSTRAP.md) · [Deployment](docs/DEPLOYMENT.md) · [Agent runbook](docs/AGENT_DEPLOYMENT.md) · [v0.2.0 notes](docs/RELEASE_NOTES_v0.2.0.md)
+[![Release](https://img.shields.io/github/v/release/Cec1c/cpamp-theme-studio?style=flat-square&label=Release)](https://github.com/Cec1c/cpamp-theme-studio/releases/latest)
+[![CI](https://img.shields.io/github/actions/workflow/status/Cec1c/cpamp-theme-studio/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/Cec1c/cpamp-theme-studio/actions/workflows/ci.yml)
+[![CPA](https://img.shields.io/badge/CPA-v7.2.138-2563EB?style=flat-square)](https://github.com/router-for-me/CLIProxyAPI)
+[![CPAMP](https://img.shields.io/badge/CPAMP-v1.12.2-0EA5E9?style=flat-square)](https://github.com/seakee/CPA-Manager-Plus)
+[![License](https://img.shields.io/badge/License-MIT-16A34A?style=flat-square)](LICENSE)
 
-CPAMP Theme Studio is a frontend theme extension delivered through the CPAMP Plugin Store. It adds a persistent visual theme editor to a writable [CPA Manager Plus](https://github.com/seakee/CPA-Manager-Plus) panel without an upstream pull request or a long-lived CPAMP fork.
+A Plugin Store-delivered theme extension that adds a persistent, multilingual visual studio to CPA Manager Plus without maintaining a panel fork.
 
-The theme, editor, and persistence logic live in the browser-side `assets/loader.js`. Because the current CPAMP store and lifecycle controls reuse CPA's plugin APIs, releases also include a minimal native bridge. The bridge registers a hidden browser-resource route and maintains one marked `<script>` block in `management.html`; it does not participate in model requests, providers, or traffic routing. Panel updates are reinjected automatically, and disabling the plugin removes only its own block.
+[简体中文](README.zh-CN.md) ｜ [Quick start](#quick-start) ｜ [Linux bootstrap](docs/BOOTSTRAP.md) ｜ [Deployment guide](docs/DEPLOYMENT.md)
 
-## Compatibility status
+</div>
 
-The initial release baseline is:
+## What can Theme Studio do?
 
-| Component | Validated version | Status |
-| --- | --- | --- |
-| CLIProxyAPI / CPA | v7.2.138 | Plugin ABI, registration, resource route, reload, and disable lifecycle validated |
-| CPA Manager Plus / CPAMP | v1.12.2 | Official `management.html` injection and browser behavior validated |
-| Windows | amd64 | Real DLL load and browser test passed |
-| Linux | amd64 | Real `.so` load, resource, and panel-injection tests passed |
-| Linux | arm64 | Native release target; validate on the release workflow before production use |
-| macOS | amd64, arm64 | Native CI/release targets |
-| Windows | arm64 | Native release target; validate on the release workflow before production use |
+- **Restyle the panel at any time.** Use CPAMP Blue, nine additional palettes, a custom accent, light/dark modes, fonts, radii, density, layout, and visual effects.
+- **Reuse the native Theme entry point.** The existing top-right Theme control opens the studio; no duplicate floating button or sidebar item is added.
+- **Keep preferences stable.** Every change previews immediately and persists in the browser, with legacy migration and one-click reset.
+- **Survive panel updates.** If upstream replaces `management.html`, the watcher restores one marked loader block; disabling the plugin removes only that block.
+- **Complete Linux updates safely.** After one bootstrap, marketplace installs, upgrades, and confirmed restarts can restart CPA, accept the new version, or roll back a failed deployment.
 
-Future CPA and CPAMP versions are expected to work while their plugin ABI and single-file panel structure remain compatible, but each new upstream version should be tested before production rollout.
+## Demo
 
-## Features
+<table>
+  <tr>
+    <td align="center">
+      <strong>Live palette switching and preview</strong><br>
+      <img src="docs/theme-studio-demo.gif" alt="CPAMP Theme Studio palette switching demo" width="714">
+    </td>
+  </tr>
+</table>
 
-- Automatic, light, and dark display modes.
-- CPAMP Blue plus nine independently designed palettes.
-- Custom accent color.
-- Six corner-radius levels, three density levels, and selectable CPAMP default, bundled JetBrains Mono, or system sans typography.
-- CPAMP's own plugin-host scrollbar treatment inside the isolated Theme Studio drawer, including thin native scrolling in Firefox and a transparent pill track in Chromium.
-- Full-width or centered desktop content.
-- Full visual effects or a reduced-effects performance mode.
-- Immediate preview, local persistence, legacy preference migration, and one-click reset.
-- Simplified Chinese, Traditional Chinese, English, and Russian UI.
-- Shadow DOM isolation, keyboard focus handling, reduced-motion support, and mobile layout.
-- Reuses CPAMP's native top-right Theme control as the single entry point; no floating or sidebar duplicate.
-- Adds a confirmed `Restart` item directly above `Reinstall` in Theme Studio's native overflow menu. A one-time Linux bootstrap lets that action and future marketplace installs restart, verify, and roll back CPA without a deployment Agent.
-- Idempotent runtime recovery and reinjection after SPA or upstream panel updates.
-- Deterministic cleanup on hot disable; normal process-shutdown cleanup is best effort.
+## Quick start
 
-## Deployment modes
+### Linux + systemd (recommended)
 
-| Mode | Support | Requirement |
-| --- | --- | --- |
-| CPAMP Lightweight Panel served by CPA (`:8317`) | Supported | CPA must have a writable `static/management.html` |
-| CPAMP Manager Server with external `PANEL_PATH` | Supported with configuration | CPA and Manager Server must share the same writable file; set plugin `panel_path` and supply the exact public `--panel-url` to bootstrap |
-| Manager Server with only its embedded panel | Supported by Linux bootstrap externalization | Supply the active public `--panel-url`; bootstrap creates and binds a writable `PANEL_PATH` |
+Run the administrator-reviewed bootstrap once, then install Theme Studio from the CPAMP Plugin Store. Bootstrap is not required for the theme itself; it prepares trusted paths, installs the restart broker, and enables failed-update rollback. Without it, the plugin still works, but CPA must be restarted manually after each install or upgrade.
 
-The plugin runs inside CPA and cannot directly rewrite a panel embedded inside another process. The Linux bootstrap can first download the active panel, bind both services to that external file, and verify the public result.
+Pin the current Release, verify the script, and run a dry-run first:
 
-## Recommended install: CPAMP Plugin Store
+```bash
+version=0.2.2
+base="https://github.com/Cec1c/cpamp-theme-studio/releases/download/v${version}"
 
-The project uses this repository as a community store source, so no CPAMP or CPA upstream PR is required. On a direct Linux/systemd deployment, first run the administrator-reviewed [one-time bootstrap](docs/BOOTSTRAP.md). A marketplace plugin cannot safely grant itself root, but after bootstrap all later installs/upgrades and confirmed card restarts are automatic and transactional.
+curl -fLO "${base}/bootstrap-linux.sh"
+curl -fLO "${base}/checksums.txt"
+grep ' bootstrap-linux.sh$' checksums.txt | sha256sum -c -
+chmod 0755 bootstrap-linux.sh
 
-Without bootstrap, merge these fields into the effective CPA `config.yaml` and plan to restart CPA manually. Prefer an absolute `dir` so a different systemd working directory cannot redirect the installation:
+./bootstrap-linux.sh \
+  --bootstrap-version "${version}" \
+  --panel-url https://example.com/management.html
+```
+
+Review the resolved CPA unit, effective config, plugin directory, and active panel. Then apply the same plan as root:
+
+```bash
+sudo ./bootstrap-linux.sh \
+  --bootstrap-version "${version}" \
+  --apply \
+  --panel-url https://example.com/management.html
+```
+
+If discovery finds multiple candidates, add explicit `--service`, `--config`, and `--panel-path` values as reported by the dry-run. Manager Server deployments require the exact public `--panel-url`; it is also strongly recommended for the CPA Lightweight Panel so the selected local file is proven to be the live page.
+
+After bootstrap:
+
+1. Open CPAMP → Plugins → Plugin Store.
+2. Search for `CPAMP Theme Studio`, choose Latest, and install.
+3. Wait for CPA to restart, return to the dashboard, and click the existing top-right Theme control.
+
+Bootstrap adds this project's community source to CPA's effective configuration, so there is no separate store-source step.
+
+### Windows, macOS, or non-systemd
+
+Add the community source to CPA's effective `config.yaml`:
 
 ```yaml
 plugins:
@@ -63,119 +86,92 @@ plugins:
     - "https://raw.githubusercontent.com/Cec1c/cpamp-theme-studio/main/registry.json"
 ```
 
-After saving and reloading the configuration:
+Install from the Plugin Store, then restart the CPA process or service that actually serves the panel. Prefer an absolute `dir`. If CPA needs a proxy to reach GitHub, configure proxy variables in the CPA service environment.
 
-1. Open CPAMP, then Plugins → Plugin Store.
-2. Confirm that the sources include `raw.githubusercontent.com` and search for `CPAMP Theme Studio`.
-3. Choose Latest or `0.2.0` and install it. CPAMP/CPA downloads the matching pinned Release archive, verifies the SHA-256 carried by the store registry, writes a versioned library under `<dir>/<goos>/<goarch>/`, and creates the enabled plugin configuration.
-4. With bootstrap installed, the marketplace write itself triggers a bound systemd broker. It waits for the library/config to settle, restarts CPA, verifies the requested version and real panel, and accepts it; a failed deployment is removed and the previous accepted plugin/config is restored. The confirmed `Restart` item in Theme Studio's overflow menu uses the same broker. Without bootstrap or on other platforms, restart the effective CPA service manually.
-5. Return to the CPAMP dashboard and click the existing Theme control in the top-right action row. The plugin replaces that control's behavior without adding another floating button.
+## Store, bootstrap, and broker
 
-The hidden read-only resource used by the injected loader and bundled fonts is:
+| Component | Responsibility |
+| --- | --- |
+| CPAMP/CPA Plugin Store | Downloads the manifest-pinned platform ZIP, verifies SHA-256, writes the versioned native library, and updates `store.version` |
+| `bootstrap-linux.sh` | Downloads and verifies the Release, but extracts and runs only the bootstrap executable; it does not install the Theme Studio `.so` as a plugin |
+| bootstrap `--apply` | Backs up config/panel state, merges trusted plugin/store/panel settings, installs the root-owned systemd broker, binds one CPA unit, restarts, and verifies |
+| broker | Watches marketplace writes or restart requests, waits for stable files, restarts only the bound CPA unit, verifies PID/service/resource/panel state, and restores the last accepted version on failure |
+| Theme Studio plugin | Serves browser resources and maintains one loader block in `management.html`; it does not read model credentials or participate in provider/request routing |
 
-```text
-/v0/resource/plugins/cpamp-theme-studio/studio
-```
+The broker is not a network proxy and does not download plugins. It is a constrained root execution chain. The browser and plugin can create only a small request file; they cannot supply arbitrary service names or call `systemctl` directly.
 
-If CPA needs a proxy to reach GitHub, set proxy variables in the service environment. `127.0.0.1:7890` works only when the proxy shares CPA's network namespace. See [Deployment](docs/DEPLOYMENT.md) for store validation, the manual fallback, upgrades, rollback, and uninstall.
+Bootstrap could technically unpack the `.so` that is already present in the Release archive, but that would bypass the CPA store's platform selection, version configuration, verification, and UI state, creating a second installer. The current design deliberately leaves installation to the store and gives the broker only post-install restart, acceptance, and rollback duties. Bootstrap therefore runs once; later marketplace updates do not rerun the script.
 
-## CPAMP Lightweight Panel configuration
+## Panel support
 
-Theme Studio does not download CPAMP itself. A typical CPA configuration for the CPAMP Lightweight Panel is:
-
-```yaml
-remote-management:
-  allow-remote: false
-  secret-key: "replace-with-a-strong-management-key"
-  disable-control-panel: false
-  disable-auto-update-panel: false
-  panel-github-repository: "https://github.com/seakee/CPA-Manager-Plus"
-```
-
-Keep management access bound to localhost or protect it with a trusted reverse proxy/VPN. Never commit a real Management Key.
-
-## Plugin configuration
-
-| Field | Default | Meaning |
+| Deployment | Support | Requirement |
 | --- | --- | --- |
-| `auto_inject` | `true` | Watch and patch a writable panel file |
-| `panel_path` | empty | Explicit `management.html` file or directory; relative paths use CPA's working directory |
-| `host_config_path` | auto-detected | CPA `config.yaml`, used to notice a hot disable and clean up immediately |
-| `watch_seconds` | `3` | Panel check interval, clamped to 1–300 seconds |
-| `restart_mode` | `auto` | `broker` after Linux bootstrap; otherwise `auto`, `disabled`, `systemd`, or `self-exit` |
-| `restart_service` | empty | Optional systemd unit override; accepted only when its `MainPID` is the current CPA PID |
-| `restart_request` | internal | One-time value written by the authenticated card control; do not edit it manually |
+| Original CPAMP Lightweight Panel served by CPA (`:8317`) | **Directly supported** | CPA can write the active `static/management.html` |
+| CPAMP Manager Server with external `PANEL_PATH` | **Supported with configuration** | CPA and Manager Server share one writable file, and bootstrap receives the exact public `--panel-url` |
+| Manager Server with an embedded-only panel | **Externalized by Linux bootstrap** | Direct Linux/systemd deployment and an active public `--panel-url` |
 
-When `panel_path` is empty, the plugin first accepts one unambiguous explicit path from `CPAMP_THEME_PANEL_PATH`, `MANAGEMENT_STATIC_PATH`, or `PANEL_PATH`. Otherwise it accepts only one existing `static/management.html` or `management.html` near CPA's working directory or executable. Conflicting or multiple candidates stop injection instead of being guessed.
+The CPA Lightweight Panel is the simplest and most direct mode. With an empty `panel_path`, the plugin accepts only one unambiguous explicit environment path or one existing `static/management.html` near CPA's working directory, executable, or config. Multiple candidates stop injection instead of being guessed.
 
-## Plugin Store contract
+The plugin cannot rewrite a page embedded in another Manager Server process. Linux bootstrap can download the active page into an external `PANEL_PATH`, bind CPA and Manager Server to that file, and verify the public result.
 
-This repository is a community source that CPAMP can add directly:
+## Compatibility baseline
 
-```yaml
-plugins:
-  store-sources:
-    - "https://raw.githubusercontent.com/Cec1c/cpamp-theme-studio/main/registry.json"
-```
+| Component | Validated version | Status |
+| --- | --- | --- |
+| CLIProxyAPI / CPA | v7.2.138 | ABI, registration, resource route, reload, and disable lifecycle validated |
+| CPA Manager Plus / CPAMP | v1.12.2 | Official `management.html` injection and real-browser behavior validated |
+| Windows | amd64 | Real DLL load and browser tests passed |
+| Linux | amd64 | Real `.so` load, resources, injection, bootstrap, and failed-update rollback passed |
+| Linux | arm64 | Native Release target; review the release workflow before production use |
+| macOS | amd64, arm64 | Native CI/Release targets |
+| Windows | arm64 | Native Release target; review the release workflow before production use |
 
-`registry.json` uses CPA schema v2 direct artifacts: every OS/architecture URL, byte size, and SHA-256 is pinned to an immutable GitHub Release. This avoids anonymous GitHub REST API rate limits during marketplace installation. CPA installs the root-level library as `cpamp-theme-studio-v<version>.<ext>`. The release workflow generates six platform archives, a standalone `bootstrap-linux.sh`, `checksums.txt`, and a verified candidate registry from the actual packaged bytes. Linux archives also contain the statically linked bootstrap binary and downloader.
-
-## Build from source
-
-Requirements: Go 1.26+, a native C compiler for CGO, and optionally Node.js 24+ for the loader syntax check. CGO shared libraries are built on a native runner for each OS/architecture.
-
-Windows PowerShell:
-
-```powershell
-.\scripts\build.ps1 -Version 0.2.0-dev
-.\scripts\package.ps1 -Version 0.2.0-dev
-```
-
-Linux or macOS:
-
-```bash
-./scripts/build.sh 0.2.0-dev
-./scripts/package.sh 0.2.0-dev
-```
-
-Generated libraries and archives are placed under `dist/` and are not committed.
+Later releases should continue to work while CPA's plugin ABI and CPAMP's single-file panel structure remain compatible, but production upgrades should still be validated against the deployment guide.
 
 ## How it works
 
-1. CPA loads the native library through plugin ABI v1.
-2. The plugin registers one hidden read-only resource route for its loader and fonts; it publishes no CPAMP sidebar menu.
-3. The injector finds a trusted writable `management.html` and inserts one unique start/end marker block before `</head>`.
-4. The loader mounts a Shadow DOM editor and applies preferences through CPAMP's CSS variables and compatible local theme stores.
-5. After the one-time Linux bootstrap, marketplace file changes and confirmed card requests are handled by a root-owned broker bound to one inspected CPA unit. It performs process/resource/panel acceptance checks and restores the previous accepted version on failure. The browser and plugin never receive systemd authority.
-6. Without that bootstrap, the control can use the legacy PID-validated systemd/self-exit modes or report that manual restart is required.
-7. The watcher restores the marker after an upstream update. Hot-disable removes it deterministically; process-shutdown cleanup is best effort because CPA may terminate before an asynchronous native-plugin shutdown finishes.
+1. CPA loads a minimal native bridge through plugin ABI v1.
+2. The bridge registers one hidden, read-only loader/font resource route and publishes no CPAMP sidebar menu.
+3. The injector adds one marked loader block to a trusted writable `management.html`.
+4. The loader mounts Theme Studio in Shadow DOM and applies preferences through CPAMP CSS variables and compatible local theme stores.
+5. The watcher restores the loader after a panel overwrite; hot-disable removes it deterministically.
 
 The plugin does not intercept CPA requests, read or proxy credentials, expose arbitrary files, or publish an unauthenticated restart endpoint.
 
-Before stopping CPA for an upgrade, rollback, or uninstall, hot-disable this plugin and wait for the marker block to disappear. If CPA has already exited and the markers remain, restore the panel backup or remove only this plugin's marked block as described in the deployment guide.
+## Development and validation
 
-## Validation performed
+Requirements: Go 1.26+, a native CGO compiler, and optionally Node.js 24+ for loader syntax checks.
 
-- `go test ./...`, `go test -race ./...`, and `go vet ./...`
-- `node --check assets/loader.js`
-- Native Windows/amd64 DLL and Linux/amd64 shared-object builds and packages
-- CPA v7.2.138 real plugin discovery, registration, hidden-menu contract, and resource responses on Windows/amd64 and Linux/amd64
-- CPAMP v1.12.2 official panel checksum and injection
-- Five consecutive open/change/close cycles using X, scrim, and Escape; three more cycles after reload and login
-- Exact singleton mount/stage/host-control counts, body-scroll restoration, SPA route re-entry, and zero sidebar entries
-- JetBrains Mono Regular/SemiBold resource responses and successful browser font loading
-- CPAMP-default, JetBrains Mono, and system-sans selection plus reload persistence
-- CPAMP plugin-host scrollbar parity in light and dark themes, including a 375×667 no-overflow pass
-- Scrollable Theme Studio at 1280×720 and 375×667, including reachable density controls and no persistent horizontal overflow
-- Palette persistence across reload and 390×844 responsive layout
-- Panel overwrite followed by automatic reinjection
-- Hot disable followed by exact restoration of the original CPAMP SHA-256
-- Native overflow-menu restart items above `Reinstall`, safe cancellation, one-time request persistence, supervised process replacement, loader recovery, and automatic refresh
-- Restart confirmation focus handling, host-native menu styling and iconography, reduced motion, and a 375×812 layout without horizontal overflow
-- Linux bootstrap dry-run/apply against a real systemd-managed CPA v7.2.138 fixture
-- Marketplace file/config change followed by automatic restart, plugin registration, resource version, and singleton panel-marker acceptance
-- Confirmed card broker restart plus a deliberately damaged `.so` upgrade followed by automatic plugin/config rollback and previous-version recovery
+```bash
+go test ./...
+go vet ./...
+node --check assets/loader.js
+```
+
+Windows packaging:
+
+```powershell
+.\scripts\build.ps1 -Version 0.2.2-dev
+.\scripts\package.ps1 -Version 0.2.2-dev
+```
+
+Linux/macOS packaging:
+
+```bash
+./scripts/build.sh 0.2.2-dev
+./scripts/package.sh 0.2.2-dev
+```
+
+## Documentation
+
+| Document | Covers |
+| --- | --- |
+| [Linux bootstrap](docs/BOOTSTRAP.md) | Dry-run, apply, broker, acceptance, diagnostics, and rollback |
+| [Deployment guide](docs/DEPLOYMENT.md) | Store install, panel modes, upgrades, fallback, and uninstall |
+| [Agent runbook](docs/AGENT_DEPLOYMENT.md) | Safety boundaries and checklist for automated deployment |
+| [v0.2.0 release notes](docs/RELEASE_NOTES_v0.2.0.md) | Background of the transactional Linux update chain |
+| [Security policy](SECURITY.md) | Vulnerability reporting and security notes |
 
 ## License and provenance
 
-The project is MIT-licensed. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the CPA ABI, CPAMP origin, YAML dependency, bundled JetBrains Mono license, and palette provenance. The plugin does not redistribute CPAMP's `management.html` or AGPL-licensed `new-api` code/assets.
+[MIT](LICENSE). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the CPA ABI, CPAMP origin, YAML dependency, JetBrains Mono license, and palette provenance. This project does not redistribute CPAMP's `management.html` or include AGPL `new-api` code or assets.

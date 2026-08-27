@@ -375,10 +375,34 @@ func (engine Engine) Watch(ctx context.Context, statePath string) error {
 	if errCurrent != nil {
 		return errCurrent
 	}
-	if !manual && SameInventory(current, state.Accepted.Files) {
+	configRaw, errConfigRead := os.ReadFile(state.ConfigPath)
+	if errConfigRead != nil {
+		return fmt.Errorf("read CPA config before marketplace verification: %w", errConfigRead)
+	}
+	reassertedConfig, configInfo, errReassert := ReassertBootstrapConfig(configRaw, ConfigPatch{
+		PluginsDir: state.PluginsDir, PanelPath: state.PanelPath, ConfigPath: state.ConfigPath,
+		RestartMode: "broker", RestartService: state.CPAService,
+	})
+	if errReassert != nil {
+		return fmt.Errorf("reassert bootstrap-owned plugin settings: %w", errReassert)
+	}
+	configChanged := !bytes.Equal(configRaw, reassertedConfig)
+	inventoryStable := SameInventory(current, state.Accepted.Files)
+	if !manual && inventoryStable && !configChanged {
 		return nil
 	}
-	info, stableFiles, errStable := waitForSettledInstall(ctx, state, manual)
+	if configChanged {
+		configInfoStat, errConfigStat := os.Stat(state.ConfigPath)
+		if errConfigStat != nil {
+			return fmt.Errorf("inspect CPA config before bootstrap reassertion: %w", errConfigStat)
+		}
+		uid, gid := fileOwner(configInfoStat)
+		if errConfigWrite := writeFileAtomic(state.ConfigPath, reassertedConfig, configInfoStat.Mode().Perm(), uid, gid); errConfigWrite != nil {
+			return fmt.Errorf("reassert bootstrap-owned plugin settings: %w", errConfigWrite)
+		}
+	}
+	settleManual := manual || (configChanged && inventoryStable && configInfo.DesiredVersion == "")
+	info, stableFiles, errStable := waitForSettledInstall(ctx, state, settleManual)
 	if errStable != nil {
 		return errStable
 	}
@@ -432,10 +456,17 @@ func (engine Engine) runtimeRollback(ctx context.Context, state State, current [
 }
 
 func (engine Engine) resolvePanel(ctx context.Context, options Options, cpa ServiceInfo, manager *ServiceInfo, configPath string) (string, []byte, bool, error) {
+	panelURL := strings.TrimSpace(options.PanelURL)
+	if manager != nil && panelURL == "" {
+		return "", nil, false, fmt.Errorf("Manager Server deployments require --panel-url so bootstrap can verify the public panel")
+	}
 	requested := strings.TrimSpace(options.PanelPath)
 	if requested != "" {
 		requested = absoluteFrom(cpa.WorkingDirectory, requested)
-		seed, errSeed := engine.panelSeed(ctx, requested, options.PanelURL)
+		seed, errSeed := engine.panelSeed(ctx, requested, panelURL)
+		if errSeed == nil && manager != nil && len(seed) == 0 {
+			errSeed = engine.confirmPanelMatchesURL(ctx, requested, panelURL)
+		}
 		return requested, seed, manager != nil && PanelPathFromManager(*manager) != requested, errSeed
 	}
 	if manager != nil {
@@ -443,12 +474,15 @@ func (engine Engine) resolvePanel(ctx context.Context, options Options, cpa Serv
 			if !regularFile(configured) {
 				return "", nil, false, fmt.Errorf("Manager Server PANEL_PATH is not a regular file: %s", configured)
 			}
+			if errConfirm := engine.confirmPanelMatchesURL(ctx, configured, panelURL); errConfirm != nil {
+				return "", nil, false, errConfirm
+			}
 			return configured, nil, false, nil
 		}
-		if strings.TrimSpace(options.PanelURL) == "" {
-			return "", nil, false, fmt.Errorf("Manager Server uses an embedded panel; pass --panel-url so bootstrap can externalize the active panel")
+		seed, errSeed := engine.panelSeed(ctx, DefaultPanelPath, panelURL)
+		if errSeed == nil && len(seed) == 0 {
+			errSeed = engine.confirmPanelMatchesURL(ctx, DefaultPanelPath, panelURL)
 		}
-		seed, errSeed := engine.panelSeed(ctx, DefaultPanelPath, options.PanelURL)
 		return DefaultPanelPath, seed, true, errSeed
 	}
 	candidates := []string{
@@ -503,6 +537,24 @@ func (engine Engine) panelSeed(ctx context.Context, panelPath, panelURL string) 
 		return nil, fmt.Errorf("active panel download returned HTTP %d or non-HTML content", status)
 	}
 	return raw, nil
+}
+
+func (engine Engine) confirmPanelMatchesURL(ctx context.Context, panelPath, panelURL string) error {
+	publicRaw, _, status, errFetch := fetchLimited(ctx, engine.client(), panelURL)
+	if errFetch != nil {
+		return fmt.Errorf("fetch public panel for path confirmation: %w", errFetch)
+	}
+	if status != http.StatusOK {
+		return fmt.Errorf("fetch public panel for path confirmation: HTTP %d", status)
+	}
+	localRaw, errLocal := os.ReadFile(panelPath)
+	if errLocal != nil {
+		return fmt.Errorf("read panel for public path confirmation: %w", errLocal)
+	}
+	if !bytes.Equal(publicRaw, localRaw) {
+		return fmt.Errorf("configured panel does not match --panel-url; refusing to patch the wrong file")
+	}
+	return nil
 }
 
 func waitForSettledInstall(ctx context.Context, state State, manual bool) (ConfigInfo, []PluginFile, error) {

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 )
 
@@ -163,12 +162,11 @@ func writePanelAtomically(path string, data []byte, mode os.FileMode) error {
 	return nil
 }
 
-func resolvePanelCandidates(configuredPath string) []string {
-	candidates := make([]string, 0, 12)
-	appendCandidate := func(value string) {
+func resolvePanelCandidates(configuredPath string) ([]string, error) {
+	normalizeCandidate := func(value string) string {
 		value = strings.TrimSpace(value)
 		if value == "" {
-			return
+			return ""
 		}
 		value = filepath.Clean(value)
 		if info, errStat := os.Stat(value); errStat == nil && info.IsDir() {
@@ -179,23 +177,51 @@ func resolvePanelCandidates(configuredPath string) []string {
 		if absolute, errAbs := filepath.Abs(value); errAbs == nil {
 			value = absolute
 		}
-		candidates = append(candidates, value)
+		return value
+	}
+	if configured := normalizeCandidate(configuredPath); configured != "" {
+		return []string{configured}, nil
 	}
 
-	appendCandidate(configuredPath)
-	appendCandidate(os.Getenv("CPAMP_THEME_PANEL_PATH"))
-	appendCandidate(os.Getenv("MANAGEMENT_STATIC_PATH"))
-	appendCandidate(os.Getenv("PANEL_PATH"))
+	explicit := make([]string, 0, 3)
+	for _, name := range []string{"CPAMP_THEME_PANEL_PATH", "MANAGEMENT_STATIC_PATH", "PANEL_PATH"} {
+		if candidate := normalizeCandidate(os.Getenv(name)); candidate != "" {
+			explicit = append(explicit, candidate)
+		}
+	}
+	if result := uniquePanelCandidates(explicit); len(result) == 1 {
+		return result, nil
+	} else if len(result) > 1 {
+		return nil, fmt.Errorf("multiple explicit panel paths are configured; set panel_path to the active management.html")
+	}
+
+	candidates := make([]string, 0, 4)
+	appendExisting := func(value string) {
+		candidate := normalizeCandidate(value)
+		if candidate == "" {
+			return
+		}
+		if _, errStat := os.Stat(candidate); errStat == nil {
+			candidates = append(candidates, candidate)
+		}
+	}
 	if cwd, errCWD := os.Getwd(); errCWD == nil {
-		appendCandidate(filepath.Join(cwd, "static", "management.html"))
-		appendCandidate(filepath.Join(cwd, "management.html"))
+		appendExisting(filepath.Join(cwd, "static", "management.html"))
+		appendExisting(filepath.Join(cwd, "management.html"))
 	}
 	if executable, errExecutable := os.Executable(); errExecutable == nil {
 		directory := filepath.Dir(executable)
-		appendCandidate(filepath.Join(directory, "static", "management.html"))
-		appendCandidate(filepath.Join(directory, "management.html"))
+		appendExisting(filepath.Join(directory, "static", "management.html"))
+		appendExisting(filepath.Join(directory, "management.html"))
 	}
+	result := uniquePanelCandidates(candidates)
+	if len(result) > 1 {
+		return nil, fmt.Errorf("found %d possible panel files; set panel_path to the active management.html", len(result))
+	}
+	return result, nil
+}
 
+func uniquePanelCandidates(candidates []string) []string {
 	seen := make(map[string]struct{}, len(candidates))
 	result := make([]string, 0, len(candidates))
 	for _, candidate := range candidates {
@@ -206,6 +232,5 @@ func resolvePanelCandidates(configuredPath string) []string {
 		seen[key] = struct{}{}
 		result = append(result, candidate)
 	}
-	sort.Strings(result)
 	return result
 }

@@ -63,6 +63,9 @@ func (verifier Verifier) verifyHTTP(ctx context.Context, state State, expectedVe
 		client = &http.Client{Timeout: 10 * time.Second}
 	}
 	if expectPlugin {
+		if strings.TrimSpace(state.ManagerService) != "" && strings.TrimSpace(state.PanelURL) == "" {
+			return fmt.Errorf("Manager Server deployment has no public panel URL; refusing to verify an unbound panel")
+		}
 		resourceURL := strings.TrimRight(state.HealthURL, "/") + "/v0/resource/plugins/" + PluginID + "/studio"
 		body, headers, status, errFetch := fetchLimited(ctx, client, resourceURL)
 		if errFetch != nil {

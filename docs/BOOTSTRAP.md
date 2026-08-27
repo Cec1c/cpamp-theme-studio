@@ -25,7 +25,7 @@ The broker never accepts a service name from the browser. Its state file is root
 - Linux with systemd, `curl`, `unzip`, and `sha256sum`.
 - A running CPA service whose executable name starts with `cli-proxy-api` or an explicit `--service`.
 - Root only for `--apply` and `--rollback`; a dry run can be performed first without writes.
-- A writable CPAMP lightweight panel, an existing Manager Server `PANEL_PATH`, or `--panel-url` so the bootstrap can externalize the active Manager panel.
+- A writable CPAMP lightweight panel, or a Manager Server deployment with the exact public `--panel-url`. The URL is required for both an existing Manager `PANEL_PATH` and embedded-panel externalization.
 - The CPA service itself must be able to download marketplace assets. `--download-proxy` applies to Release and public-panel downloads made by this bootstrap process; it does not change CPA's systemd environment.
 
 Docker, Windows services, launchd, and manually started CPA processes are not handled by this bootstrap. Use a platform-native supervisor or restart CPA manually in those environments.
@@ -70,7 +70,7 @@ sudo ./bootstrap-linux.sh \
   --panel-url https://example.com/management.html
 ```
 
-When exactly one CPA systemd service and one panel file exist, `--service`, `--config`, and `--panel-path` may be omitted. `--panel-url` is strongly recommended: it proves the public panel matches the selected local file, and is required when externalizing an embedded Manager Server panel. If more than one candidate exists, the bootstrap stops instead of guessing.
+When exactly one CPA systemd service and one panel file exist, `--service`, `--config`, and `--panel-path` may be omitted. `--panel-url` is strongly recommended for the lightweight panel and required for every Manager Server deployment: it proves the public panel matches the selected local file before any patch is accepted. If more than one candidate exists, the bootstrap stops instead of guessing.
 
 ## Marketplace flow after bootstrap
 

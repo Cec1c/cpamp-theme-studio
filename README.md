@@ -44,7 +44,7 @@ Future CPA and CPAMP versions are expected to work while their plugin ABI and si
 | Mode | Support | Requirement |
 | --- | --- | --- |
 | CPAMP Lightweight Panel served by CPA (`:8317`) | Supported | CPA must have a writable `static/management.html` |
-| CPAMP Manager Server with external `PANEL_PATH` | Supported with configuration | CPA and Manager Server must share the same writable file; set plugin `panel_path` |
+| CPAMP Manager Server with external `PANEL_PATH` | Supported with configuration | CPA and Manager Server must share the same writable file; set plugin `panel_path` and supply the exact public `--panel-url` to bootstrap |
 | Manager Server with only its embedded panel | Supported by Linux bootstrap externalization | Supply the active public `--panel-url`; bootstrap creates and binds a writable `PANEL_PATH` |
 
 The plugin runs inside CPA and cannot directly rewrite a panel embedded inside another process. The Linux bootstrap can first download the active panel, bind both services to that external file, and verify the public result.
@@ -106,7 +106,7 @@ Keep management access bound to localhost or protect it with a trusted reverse p
 | `restart_service` | empty | Optional systemd unit override; accepted only when its `MainPID` is the current CPA PID |
 | `restart_request` | internal | One-time value written by the authenticated card control; do not edit it manually |
 
-When `panel_path` is empty, the plugin checks `CPAMP_THEME_PANEL_PATH`, `MANAGEMENT_STATIC_PATH`, and `PANEL_PATH`, followed by `static/management.html` and `management.html` near CPA's working directory and executable.
+When `panel_path` is empty, the plugin first accepts one unambiguous explicit path from `CPAMP_THEME_PANEL_PATH`, `MANAGEMENT_STATIC_PATH`, or `PANEL_PATH`. Otherwise it accepts only one existing `static/management.html` or `management.html` near CPA's working directory or executable. Conflicting or multiple candidates stop injection instead of being guessed.
 
 ## Plugin Store contract
 

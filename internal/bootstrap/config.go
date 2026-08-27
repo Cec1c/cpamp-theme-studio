@@ -83,21 +83,7 @@ func PatchConfig(raw []byte, patch ConfigPatch) ([]byte, ConfigInfo, error) {
 	plugins := ensureMapping(root, "plugins")
 	setMappingValue(plugins, "enabled", boolNode(true))
 	setMappingValue(plugins, "dir", stringNode(filepath.Clean(patch.PluginsDir)))
-	sources := mappingValue(plugins, "store-sources")
-	if sources == nil || sources.Kind != yaml.SequenceNode {
-		sources = &yaml.Node{Kind: yaml.SequenceNode, Tag: "!!seq"}
-		setMappingValue(plugins, "store-sources", sources)
-	}
-	foundSource := false
-	for _, item := range sources.Content {
-		if strings.TrimSpace(scalarValue(item)) == StoreSource {
-			foundSource = true
-			break
-		}
-	}
-	if !foundSource {
-		sources.Content = append(sources.Content, stringNode(StoreSource))
-	}
+	ensureStoreSource(plugins)
 	configs := ensureMapping(plugins, "configs")
 	plugin := mappingValue(configs, PluginID)
 	if plugin == nil || plugin.Kind != yaml.MappingNode {
@@ -121,6 +107,56 @@ func PatchConfig(raw []byte, patch ConfigPatch) ([]byte, ConfigInfo, error) {
 		return nil, ConfigInfo{}, errInspect
 	}
 	return encoded, info, nil
+}
+
+// ReassertBootstrapConfig restores only the settings owned by the bootstrap
+// after a marketplace write. It intentionally preserves the plugin's enabled
+// flag, auto_inject choice, store manifest, and all unrelated configuration.
+func ReassertBootstrapConfig(raw []byte, patch ConfigPatch) ([]byte, ConfigInfo, error) {
+	doc, root, err := parseDocument(raw)
+	if err != nil {
+		return nil, ConfigInfo{}, err
+	}
+	plugins := ensureMapping(root, "plugins")
+	if strings.TrimSpace(patch.PluginsDir) != "" {
+		setMappingValue(plugins, "dir", stringNode(filepath.Clean(patch.PluginsDir)))
+	}
+	ensureStoreSource(plugins)
+	configs := ensureMapping(plugins, "configs")
+	plugin := mappingValue(configs, PluginID)
+	if plugin == nil || plugin.Kind != yaml.MappingNode {
+		plugin = &yaml.Node{Kind: yaml.MappingNode, Tag: "!!map"}
+		setMappingValue(configs, PluginID, plugin)
+	}
+	setMappingValue(plugin, "panel_path", stringNode(filepath.Clean(patch.PanelPath)))
+	setMappingValue(plugin, "host_config_path", stringNode(filepath.Clean(patch.ConfigPath)))
+	setMappingValue(plugin, "watch_seconds", intNode(3))
+	setMappingValue(plugin, "restart_mode", stringNode(strings.TrimSpace(patch.RestartMode)))
+	setMappingValue(plugin, "restart_service", stringNode(strings.TrimSpace(patch.RestartService)))
+
+	encoded, errEncode := encodeDocument(doc)
+	if errEncode != nil {
+		return nil, ConfigInfo{}, errEncode
+	}
+	info, errInspect := InspectConfig(encoded, filepath.Dir(patch.ConfigPath))
+	if errInspect != nil {
+		return nil, ConfigInfo{}, errInspect
+	}
+	return encoded, info, nil
+}
+
+func ensureStoreSource(plugins *yaml.Node) {
+	sources := mappingValue(plugins, "store-sources")
+	if sources == nil || sources.Kind != yaml.SequenceNode {
+		sources = &yaml.Node{Kind: yaml.SequenceNode, Tag: "!!seq"}
+		setMappingValue(plugins, "store-sources", sources)
+	}
+	for _, item := range sources.Content {
+		if strings.TrimSpace(scalarValue(item)) == StoreSource {
+			return
+		}
+	}
+	sources.Content = append(sources.Content, stringNode(StoreSource))
 }
 
 func RestorePluginConfig(raw []byte, snapshot string, present bool) ([]byte, error) {

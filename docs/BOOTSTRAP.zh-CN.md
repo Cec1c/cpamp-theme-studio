@@ -25,7 +25,7 @@ bootstrap 会解析正在运行的 CPA 进程，并把后续操作固定绑定�
 - Linux、systemd、`curl`、`unzip`、`sha256sum`。
 - 正在运行且可识别的 CPA systemd 服务；可执行文件名应以 `cli-proxy-api` 开头，或显式传入 `--service`。
 - 只有 `--apply` 和 `--rollback` 需要 root；可以先无写入地执行 dry-run。
-- 可写的 CPAMP 轻量面板、已有 Manager Server `PANEL_PATH`，或者提供 `--panel-url` 让 bootstrap 把活动 Manager 面板外置。
+- 可写的 CPAMP 轻量面板；若使用 Manager Server，则必须提供准确的公网 `--panel-url`。无论复用已有 Manager `PANEL_PATH` 还是外置内嵌面板都需要该 URL。
 - CPA 服务本身仍要能够下载市场资产。`--download-proxy` 会用于本次 bootstrap 进程的 Release 与公网页面下载，但不会修改 CPA 的 systemd 代理环境。
 
 此 bootstrap 不处理 Docker、Windows 服务、launchd 或手工启动的 CPA；这些环境应使用相应平台的 supervisor，或手工重启。
@@ -70,7 +70,7 @@ sudo ./bootstrap-linux.sh \
   --panel-url https://example.com/management.html
 ```
 
-若主机上恰好只有一个 CPA systemd 服务和一个面板文件，可以省略 `--service`、`--config`、`--panel-path`。强烈建议提供 `--panel-url`：它会证明公网页面与选中的本地文件一致；外置 Manager Server 内嵌面板时则是必需参数。有多个候选时 bootstrap 会停止，不会猜测。
+若主机上恰好只有一个 CPA systemd 服务和一个面板文件，可以省略 `--service`、`--config`、`--panel-path`。轻量面板强烈建议提供 `--panel-url`；所有 Manager Server 部署都必须提供该参数，以便在接受补丁前证明公网页面与选中的本地文件一致。有多个候选时 bootstrap 会停止，不会猜测。
 
 ## bootstrap 后的市场流程
 

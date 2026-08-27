@@ -187,7 +187,8 @@ This mode works only when both processes see the same writable file.
 2. Configure Manager Server `PANEL_PATH` to that file.
 3. Mount or share the same file into CPA's filesystem.
 4. Set the plugin `panel_path` to CPA's view of that shared file.
-5. Restart CPA and Manager Server.
+5. When using the Linux bootstrap, pass the exact public Manager `--panel-url`; bootstrap compares it with this file before patching.
+6. Restart CPA and Manager Server.
 
 When the two services run in separate containers, mount one host file into both containers. The in-container paths may differ, but both mounts must refer to the same host file.
 

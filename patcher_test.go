@@ -127,7 +127,10 @@ func TestPatchPanelFileRejectsOversizedPanel(t *testing.T) {
 func TestResolvePanelCandidatesUsesConfiguredDirectory(t *testing.T) {
 	dir := t.TempDir()
 	want, _ := filepath.Abs(filepath.Join(dir, "management.html"))
-	candidates := resolvePanelCandidates(dir)
+	candidates, errResolve := resolvePanelCandidates(dir)
+	if errResolve != nil {
+		t.Fatal(errResolve)
+	}
 	found := false
 	for _, candidate := range candidates {
 		if strings.EqualFold(candidate, want) {
@@ -137,5 +140,25 @@ func TestResolvePanelCandidatesUsesConfiguredDirectory(t *testing.T) {
 	}
 	if !found {
 		t.Fatalf("configured panel candidate %q missing from %#v", want, candidates)
+	}
+}
+
+func TestResolvePanelCandidatesRejectsConflictingExplicitEnvironmentPaths(t *testing.T) {
+	t.Setenv("CPAMP_THEME_PANEL_PATH", filepath.Join(t.TempDir(), "one.html"))
+	t.Setenv("PANEL_PATH", filepath.Join(t.TempDir(), "two.html"))
+	if _, errResolve := resolvePanelCandidates(""); errResolve == nil {
+		t.Fatal("conflicting explicit panel paths were accepted")
+	}
+}
+
+func TestResolvePanelCandidatesPrefersConfiguredPath(t *testing.T) {
+	t.Setenv("CPAMP_THEME_PANEL_PATH", filepath.Join(t.TempDir(), "wrong.html"))
+	dir := t.TempDir()
+	candidates, errResolve := resolvePanelCandidates(filepath.Join(dir, "management.html"))
+	if errResolve != nil {
+		t.Fatal(errResolve)
+	}
+	if len(candidates) != 1 || !strings.EqualFold(candidates[0], filepath.Join(dir, "management.html")) {
+		t.Fatalf("candidates = %#v", candidates)
 	}
 }

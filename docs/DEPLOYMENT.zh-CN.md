@@ -189,7 +189,8 @@ Windows 路径应加引号，并使用正斜杠或转义后的反斜杠。
 2. 让 Manager Server 的 `PANEL_PATH` 指向该文件。
 3. 将同一个文件挂载或共享到 CPA 文件系统。
 4. 插件 `panel_path` 填写 CPA 看到的路径。
-5. 重启 CPA 和 Manager Server。
+5. 使用 Linux bootstrap 时，必须传入准确的 Manager 公网 `--panel-url`；bootstrap 会在注入前将它与该文件比对。
+6. 重启 CPA 和 Manager Server。
 
 两个服务位于不同容器时，应把同一个宿主机文件挂载进两个容器。容器内路径可以不同，但必须对应同一个宿主文件。
 

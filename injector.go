@@ -342,7 +342,9 @@ func stopInjector(remove bool) {
 
 func cleanupPanelCandidates(tracked []string, configuredPath string) []string {
 	paths := append([]string(nil), tracked...)
-	paths = append(paths, resolvePanelCandidates(configuredPath)...)
+	if candidates, errResolve := resolvePanelCandidates(configuredPath); errResolve == nil {
+		paths = append(paths, candidates...)
+	}
 	seen := make(map[string]struct{}, len(paths))
 	result := make([]string, 0, len(paths))
 	for _, path := range paths {
@@ -361,13 +363,22 @@ func cleanupPanelCandidates(tracked []string, configuredPath string) []string {
 }
 
 func patchCandidates(configuredPath string) {
-	candidates := resolvePanelCandidates(configuredPath)
+	candidates, errResolve := resolvePanelCandidates(configuredPath)
+	if errResolve != nil {
+		injectorRuntime.Lock()
+		if injectorRuntime.status.Configured {
+			injectorRuntime.status.CandidateCount = 0
+			injectorRuntime.status.PatchedCount = 0
+			injectorRuntime.status.LastError = errResolve.Error()
+			injectorRuntime.status.LastCheck = time.Now()
+			injectorRuntime.patched = make(map[string]struct{})
+		}
+		injectorRuntime.Unlock()
+		return
+	}
 	nextPatched := make(map[string]struct{})
 	lastError := ""
 	for _, candidate := range candidates {
-		if _, errStat := os.Stat(candidate); errStat != nil {
-			continue
-		}
 		if _, errPatch := patchPanelFile(candidate); errPatch != nil {
 			lastError = errPatch.Error()
 			continue

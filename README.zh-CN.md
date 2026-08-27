@@ -44,7 +44,7 @@ CPAMP 主题工作室是一个通过 CPAMP 插件市场交付的前端主题扩�
 | 模式 | 支持情况 | 要求 |
 | --- | --- | --- |
 | CPA `:8317` 托管的 CPAMP 轻量面板 | 支持 | CPA 需要可写的 `static/management.html` |
-| 使用外置 `PANEL_PATH` 的 CPAMP Manager Server | 有条件支持 | CPA 与 Manager Server 必须共享同一个可写文件，并配置插件 `panel_path` |
+| 使用外置 `PANEL_PATH` 的 CPAMP Manager Server | 有条件支持 | CPA 与 Manager Server 必须共享同一个可写文件，配置插件 `panel_path`，并向 bootstrap 提供准确的公网 `--panel-url` |
 | 只有内嵌面板的 Manager Server | 可由 Linux bootstrap 外置 | 提供活动公网 `--panel-url`；bootstrap 会创建并绑定可写 `PANEL_PATH` |
 
 插件运行在 CPA 内，不能直接改写另一个进程的内嵌面板。Linux bootstrap 可以先下载活动面板，让两个服务绑定到外置文件，再验证公网结果。
@@ -106,7 +106,7 @@ remote-management:
 | `restart_service` | 空 | 可选 systemd 服务覆盖；只有其 `MainPID` 等于当前 CPA PID 时才接受 |
 | `restart_request` | 内部字段 | 已认证卡片控件写入的一次性值；不要手工修改 |
 
-`panel_path` 为空时，插件会依次检查 `CPAMP_THEME_PANEL_PATH`、`MANAGEMENT_STATIC_PATH`、`PANEL_PATH`，以及 CPA 工作目录和可执行文件附近的 `static/management.html`、`management.html`。
+`panel_path` 为空时，插件先从 `CPAMP_THEME_PANEL_PATH`、`MANAGEMENT_STATIC_PATH`、`PANEL_PATH` 中接受唯一且无冲突的显式路径；否则只接受 CPA 工作目录或可执行文件附近唯一存在的 `static/management.html` / `management.html`。若路径冲突或候选不唯一，注入会停止，不再猜测。
 
 ## 插件商店契约
 

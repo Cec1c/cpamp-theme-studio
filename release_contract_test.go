@@ -72,8 +72,8 @@ func TestRegistryMatchesCPAStoreV2DirectContract(t *testing.T) {
 	if strings.HasPrefix(strings.ToLower(plugin.Version), "v") {
 		t.Fatalf("registry version %q must not include a v prefix", plugin.Version)
 	}
-	if plugin.Version != "0.2.1" {
-		t.Fatalf("registry version = %q, want 0.2.1", plugin.Version)
+	if plugin.Version != "0.2.2" {
+		t.Fatalf("registry version = %q, want 0.2.2", plugin.Version)
 	}
 	if plugin.Install.Type != "direct" {
 		t.Fatalf("install type = %q, want direct", plugin.Install.Type)
@@ -82,12 +82,12 @@ func TestRegistryMatchesCPAStoreV2DirectContract(t *testing.T) {
 		SHA256 string
 		Size   int64
 	}{
-		"windows/amd64": {"4f7ec76110b3bab61a0aaf2bfafaadf21cbde1684061d151f869d4e226f74276", 2412493},
-		"windows/arm64": {"4ecab1e09f6514668ea63529f4e3cb0b70edf51656f874318e5e899ad44ea8a5", 2368688},
-		"linux/amd64":   {"273d7c60a61af81ce4eb4f242d6059094fb357a52118d3387943e4747d799db6", 5398669},
-		"linux/arm64":   {"bfd32b48983f498813f56db074093e58bb205150888c1847366fef1c4deb2fa0", 4896560},
-		"darwin/amd64":  {"b2a8770e27ed241fbc40c58c7f9b6cdec2c34772942a3df973a03e18a3f8e012", 2302990},
-		"darwin/arm64":  {"572201794166f74ea841498c79603be72e5fdc5fe068d6e7e00ddbaa5a8649cb", 2151381},
+		"windows/amd64": {"b9d287a4e607944c1f3c9032f8548f24b2213c835204a773ab01056e6913803b", 2412825},
+		"windows/arm64": {"e94fb16ed4cd15bcaa32b5659751ddcfe958a0ada2b549ee0454c06a06a74661", 2369185},
+		"linux/amd64":   {"2de10e7d50f95c1e77699d5c98205a2776b70163e7e93a5dfc3f729fa80ff374", 5398271},
+		"linux/arm64":   {"b0c6c84a5949d8d4fe627fdbd0fb92c2869e291d7c6ef08f8a4c962330aabe0e", 4896914},
+		"darwin/amd64":  {"aa28d3f667a21a0c05cbdd5c9118b1cac5a3fa184d2f2645bac11094efc3490a", 2304698},
+		"darwin/arm64":  {"3c13915bc7de705546e7bd0e6b1c42dff20f3b84c77094ddd59fa6f09c79a1b8", 2151728},
 	}
 	if len(plugin.Install.Artifacts) != len(expected) {
 		t.Fatalf("artifacts = %d, want %d", len(plugin.Install.Artifacts), len(expected))

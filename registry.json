@@ -6,7 +6,7 @@
       "name": "CPAMP Theme Studio",
       "description": "Adds a persistent multilingual visual theme editor to the CPAMP management panel. The feature is implemented in browser-side resources; a minimal CPA native bridge exposes it to the CPAMP plugin store and page container.",
       "author": "Cec1c",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "repository": "https://github.com/Cec1c/cpamp-theme-studio",
       "homepage": "https://github.com/Cec1c/cpamp-theme-studio",
       "license": "MIT",
@@ -21,44 +21,44 @@
           {
             "goos": "windows",
             "goarch": "amd64",
-            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.2.0/cpamp-theme-studio_0.2.0_windows_amd64.zip",
-            "sha256": "bbcc7be37ad14d347074c9c563fa44c99f465f67b44fac0b92ace28f9e8b9466",
-            "size": 2410737
+            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.2.1/cpamp-theme-studio_0.2.1_windows_amd64.zip",
+            "sha256": "4f7ec76110b3bab61a0aaf2bfafaadf21cbde1684061d151f869d4e226f74276",
+            "size": 2412493
           },
           {
             "goos": "windows",
             "goarch": "arm64",
-            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.2.0/cpamp-theme-studio_0.2.0_windows_arm64.zip",
-            "sha256": "3fcb951e93dc634c0262591eb444642dc31453cb3f258d8c587bfac5d648e0b9",
-            "size": 2365618
+            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.2.1/cpamp-theme-studio_0.2.1_windows_arm64.zip",
+            "sha256": "4ecab1e09f6514668ea63529f4e3cb0b70edf51656f874318e5e899ad44ea8a5",
+            "size": 2368688
           },
           {
             "goos": "linux",
             "goarch": "amd64",
-            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.2.0/cpamp-theme-studio_0.2.0_linux_amd64.zip",
-            "sha256": "cbf656cae7b46d4af376f92d7b3f7c8c8e6f61214b90d7b733f2a2995f0c5143",
-            "size": 5393660
+            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.2.1/cpamp-theme-studio_0.2.1_linux_amd64.zip",
+            "sha256": "273d7c60a61af81ce4eb4f242d6059094fb357a52118d3387943e4747d799db6",
+            "size": 5398669
           },
           {
             "goos": "linux",
             "goarch": "arm64",
-            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.2.0/cpamp-theme-studio_0.2.0_linux_arm64.zip",
-            "sha256": "f38697d11f1fab82319a2a524976795ec0f3a90e10b189fd79dd331bfbe2466d",
-            "size": 4891233
+            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.2.1/cpamp-theme-studio_0.2.1_linux_arm64.zip",
+            "sha256": "bfd32b48983f498813f56db074093e58bb205150888c1847366fef1c4deb2fa0",
+            "size": 4896560
           },
           {
             "goos": "darwin",
             "goarch": "amd64",
-            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.2.0/cpamp-theme-studio_0.2.0_darwin_amd64.zip",
-            "sha256": "822a3bada042faa0ffd546359efcf669cc6bc785d9a4b283d0ce079337f4c083",
-            "size": 2300489
+            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.2.1/cpamp-theme-studio_0.2.1_darwin_amd64.zip",
+            "sha256": "b2a8770e27ed241fbc40c58c7f9b6cdec2c34772942a3df973a03e18a3f8e012",
+            "size": 2302990
           },
           {
             "goos": "darwin",
             "goarch": "arm64",
-            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.2.0/cpamp-theme-studio_0.2.0_darwin_arm64.zip",
-            "sha256": "2462553ac1a35e9bf8648f1adab41e6638d7ebd137cee5f30a1d196ea594426f",
-            "size": 2148148
+            "url": "https://github.com/Cec1c/cpamp-theme-studio/releases/download/v0.2.1/cpamp-theme-studio_0.2.1_darwin_arm64.zip",
+            "sha256": "572201794166f74ea841498c79603be72e5fdc5fe068d6e7e00ddbaa5a8649cb",
+            "size": 2151381
           }
         ]
       }

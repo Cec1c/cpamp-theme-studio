@@ -70,7 +70,7 @@ Then use CPAMP:
 2. Search for `CPAMP Theme Studio` and choose Latest or a specific version such as `0.2.0`.
 3. Complete the third-party confirmation and install it.
 4. Record the returned version and actual `path`; never assume a relative directory is beside the CPA executable.
-5. With bootstrap installed, the plugin-directory write triggers the broker automatically; wait for the store flow to finish and for CPA to return. The card's confirmed `Restart CPA` control remains available for explicit restarts and uses the same broker. Without bootstrap, use the configured legacy restart mode or restart the effective CPA service manually. Theme Studio's panel watcher is process-local; CPA hot reload can leave the retired version alive until process exit, causing old and new loader cache keys to alternate.
+5. With bootstrap installed, the plugin-directory write triggers the broker automatically; wait for the store flow to finish and for CPA to return. The confirmed `Restart` item above `Reinstall` in Theme Studio's overflow menu remains available for explicit restarts and uses the same broker. Without bootstrap, use the configured legacy restart mode or restart the effective CPA service manually. Theme Studio's panel watcher is process-local; CPA hot reload can leave the retired version alive until process exit, causing old and new loader cache keys to alternate.
 6. Confirm `registered=true` and `effective_enabled=true` under Installed Plugins, then return to the dashboard and click CPAMP's existing top-right Theme control. No floating or sidebar Theme Studio entry is expected.
 
 The store path passes only when discovery, pinned SHA-256 verification, installation, target path, registration, and the HTTP 200 resource check all succeed. If store installation fails, do not manually copy a library and report a successful store deployment. Capture the CPAMP response and CPA logs first; use the next section only as an explicitly reported manual fallback.
@@ -167,7 +167,7 @@ On Windows, quote paths and use either forward slashes or escaped backslashes.
 
 ### Safe restart control
 
-The plugin card does not call a public restart API and does not read the Management Key. It generates a random one-time `restart_request`, opens CPAMP's native Edit configuration drawer, and saves that value through the already authenticated management session. The plugin then schedules the selected restart strategy after the save response has had time to return.
+The `Restart` overflow-menu item does not call a public restart API and does not read the Management Key. It generates a random one-time `restart_request`, opens CPAMP's native Edit configuration drawer, and saves that value through the already authenticated management session. The plugin then schedules the selected restart strategy after the save response has had time to return.
 
 | `restart_mode` | Behavior | Safe use |
 | --- | --- | --- |
@@ -222,7 +222,7 @@ Then open `management.html` in a browser and verify:
 - Browser-computed typography starts with `JetBrains Mono`; both bundled font weights load successfully.
 - Each cycle leaves exactly one mount, host Theme control, and stage, and restores `body` overflow after closing.
 - Browser developer tools show no Theme Studio errors.
-- The Theme Studio row and store card each expose one `Restart CPA` control. Canceling the confirmation leaves CPA and its configuration unchanged.
+- Theme Studio's native overflow menu exposes one `Restart` item directly above `Reinstall`, using the same markup, styling, and icon. Canceling the confirmation leaves CPA and its configuration unchanged.
 - When automatic restart is configured, confirming changes the opaque `process_instance`, restores the loader, and refreshes to a usable login/dashboard. Never verify by PID or resource status alone; check the real panel too.
 - The file contains exactly one start marker and one end marker.
 

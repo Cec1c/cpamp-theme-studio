@@ -106,7 +106,7 @@ The card does not expose a restart POST endpoint or read the Management Key. It 
 [ ] GET .../studio?asset=font-regular and font-semibold return 200 font/woff2
 [ ] GET .../studio?asset=restart-status returns read-only JSON with no PID or secret
 [ ] management.html has exactly one start marker and one end marker
-[ ] Theme Studio's installed row and store card each contain one confirmed Restart CPA control
+[ ] Theme Studio's native overflow menu contains one confirmed Restart item directly above Reinstall
 [ ] canceling the confirmation leaves CPA_PID, process_instance, config SHA-256, and panel usability unchanged
 [ ] after any install or upgrade, the effective CPA process was restarted; process_instance changed; and the loader marker v= value exactly matches the installed plugin version
 [ ] CPAMP still reaches its login/dashboard, has no floating/sidebar Theme Studio item, and exposes the studio through the existing top-right Theme control

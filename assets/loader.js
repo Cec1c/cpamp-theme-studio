@@ -131,7 +131,7 @@
         density: '界面密度', compact: '紧凑', comfortable: '舒适',
         layout: '内容宽度', full: '铺满', centered: '居中', effects: '视觉效果', rich: '完整效果', efficient: '性能优先',
         scopeHost: '已连接宿主面板', scopeFrame: '当前为独立预览；请配置可写面板以全局生效',
-        restartAction: '重启 CPA', restartConfirmTitle: '确认重启 CPA', restartConfirm: '重启会短暂中断正在进行的请求。确认现在重启 CPA？', restartCancel: '取消',
+        restartMenuAction: '重新启动', restartAction: '重启 CPA', restartConfirmTitle: '确认重启 CPA', restartConfirm: '重启会短暂中断正在进行的请求。确认现在重启 CPA？', restartCancel: '取消',
         restartPreparing: '正在请求重启…', restartWaiting: '正在等待 CPA 恢复…',
         restartUnavailable: '当前部署无法安全自动重启 CPA，请检查插件的 restart_mode 和 restart_service 配置。',
         restartFailed: 'CPA 自动重启失败，请检查服务权限和日志。',
@@ -148,7 +148,7 @@
         density: '介面密度', compact: '緊湊', comfortable: '舒適',
         layout: '內容寬度', full: '鋪滿', centered: '置中', effects: '視覺效果', rich: '完整效果', efficient: '效能優先',
         scopeHost: '已連接宿主面板', scopeFrame: '目前為獨立預覽；請設定可寫面板以全域生效',
-        restartAction: '重新啟動 CPA', restartConfirmTitle: '確認重新啟動 CPA', restartConfirm: '重新啟動會短暫中斷正在進行的請求。確認現在重新啟動 CPA？', restartCancel: '取消',
+        restartMenuAction: '重新啟動', restartAction: '重新啟動 CPA', restartConfirmTitle: '確認重新啟動 CPA', restartConfirm: '重新啟動會短暫中斷正在進行的請求。確認現在重新啟動 CPA？', restartCancel: '取消',
         restartPreparing: '正在要求重新啟動…', restartWaiting: '正在等待 CPA 恢復…',
         restartUnavailable: '目前部署無法安全自動重新啟動 CPA，請檢查 restart_mode 與 restart_service 設定。',
         restartFailed: 'CPA 自動重新啟動失敗，請檢查服務權限與日誌。',
@@ -165,7 +165,7 @@
         density: 'Density', compact: 'Compact', comfortable: 'Comfortable',
         layout: 'Content width', full: 'Full width', centered: 'Centered', effects: 'Visual effects', rich: 'Full effects', efficient: 'Performance',
         scopeHost: 'Connected to the host panel', scopeFrame: 'Standalone preview; configure a writable panel for global startup',
-        restartAction: 'Restart CPA', restartConfirmTitle: 'Confirm CPA restart', restartConfirm: 'Restarting briefly interrupts active requests. Restart CPA now?', restartCancel: 'Cancel',
+        restartMenuAction: 'Restart', restartAction: 'Restart CPA', restartConfirmTitle: 'Confirm CPA restart', restartConfirm: 'Restarting briefly interrupts active requests. Restart CPA now?', restartCancel: 'Cancel',
         restartPreparing: 'Requesting restart…', restartWaiting: 'Waiting for CPA to recover…',
         restartUnavailable: 'This deployment cannot safely restart CPA automatically. Check restart_mode and restart_service.',
         restartFailed: 'CPA restart failed. Check service permissions and logs.',
@@ -182,7 +182,7 @@
         density: 'Плотность', compact: 'Компактная', comfortable: 'Просторная',
         layout: 'Ширина', full: 'На всю ширину', centered: 'По центру', effects: 'Эффекты', rich: 'Полные', efficient: 'Производительность',
         scopeHost: 'Подключено к панели', scopeFrame: 'Автономный просмотр; для запуска везде настройте доступный файл панели',
-        restartAction: 'Перезапустить CPA', restartConfirmTitle: 'Подтвердите перезапуск CPA', restartConfirm: 'Перезапуск кратковременно прервёт активные запросы. Перезапустить CPA сейчас?', restartCancel: 'Отмена',
+        restartMenuAction: 'Перезапустить', restartAction: 'Перезапустить CPA', restartConfirmTitle: 'Подтвердите перезапуск CPA', restartConfirm: 'Перезапуск кратковременно прервёт активные запросы. Перезапустить CPA сейчас?', restartCancel: 'Отмена',
         restartPreparing: 'Запрос перезапуска…', restartWaiting: 'Ожидание восстановления CPA…',
         restartUnavailable: 'Это развёртывание не может безопасно перезапустить CPA автоматически. Проверьте restart_mode и restart_service.',
         restartFailed: 'Не удалось перезапустить CPA. Проверьте права службы и журналы.',
@@ -390,12 +390,6 @@
 :root[data-cts-density='compact']{--app-gap:14px;--app-card-padding:18px;--sidebar-width:198px;--floating-control-size:32px}
 :root[data-cts-density='comfortable']{--app-gap:24px;--app-card-padding:28px;--sidebar-width:224px;--floating-control-size:38px}
 @media(min-width:1280px){:root[data-cts-layout='centered'] .main-content:not(.main-content-logs):not(.main-content-plugin-resource){max-width:1440px;margin-inline:auto}}
-button.cpamp-theme-studio-restart-control{min-height:44px;touch-action:manipulation;color:var(--app-danger,#b42318);border-color:color-mix(in srgb,var(--app-danger,#b42318) 32%,var(--app-border,transparent));background:color-mix(in srgb,var(--app-danger,#b42318) 7%,var(--app-surface-strong,#fff));transition:background .18s ease,border-color .18s ease,color .18s ease,opacity .18s ease}
-button.cpamp-theme-studio-restart-control:hover:not(:disabled){color:var(--app-danger-strong,#8f1d14);border-color:color-mix(in srgb,var(--app-danger,#b42318) 55%,var(--app-border,transparent));background:color-mix(in srgb,var(--app-danger,#b42318) 12%,var(--app-surface-strong,#fff))}
-button.cpamp-theme-studio-restart-control:focus-visible{outline:2px solid var(--app-danger,#b42318);outline-offset:2px}
-button.cpamp-theme-studio-restart-control:disabled{cursor:not-allowed;opacity:.58}
-button.cpamp-theme-studio-restart-control svg{width:16px;height:16px;flex:none}
-button.cpamp-theme-studio-restart-control[aria-busy='true'] svg{animation:cts-restart-spin .9s linear infinite}
 .cts-restart-confirm-layer{position:fixed;inset:0;z-index:2147483002;display:grid;place-items:center;padding:16px;font-family:var(--app-font-family,'JetBrains Mono','PingFang SC','Microsoft YaHei',monospace)}
 .cts-restart-confirm-scrim{position:absolute;inset:0;background:rgba(5,10,20,.58);backdrop-filter:blur(2px)}
 .cts-restart-confirm-dialog{position:relative;width:min(420px,calc(100vw - 32px));padding:22px;border:1px solid var(--app-border-strong,rgba(15,23,42,.16));border-radius:var(--app-radius-lg,16px);background:var(--app-surface-strong,#fff);color:var(--app-text-primary,#202a38);box-shadow:0 24px 72px rgba(5,10,20,.32)}
@@ -407,9 +401,8 @@ button.cpamp-theme-studio-restart-control[aria-busy='true'] svg{animation:cts-re
 .cts-restart-confirm-actions button:focus-visible{outline:3px solid color-mix(in srgb,var(--app-danger,#b42318) 38%,transparent);outline-offset:2px}
 .cts-restart-feedback{position:fixed;left:50%;bottom:24px;z-index:2147483003;display:flex;align-items:center;gap:12px;width:min(560px,calc(100vw - 32px));padding:12px 12px 12px 16px;border:1px solid color-mix(in srgb,var(--app-danger,#b42318) 38%,var(--app-border,transparent));border-radius:var(--app-radius-md,10px);background:var(--app-surface-strong,#fff);color:var(--app-text-primary,#202a38);box-shadow:0 18px 48px rgba(5,10,20,.25);font:400 14px/1.5 var(--app-font-family,'JetBrains Mono','PingFang SC','Microsoft YaHei',monospace)}
 .cts-restart-feedback::before{content:'';width:8px;height:8px;flex:none;border-radius:50%;background:var(--app-danger,#b42318)}.cts-restart-feedback span{flex:1;min-width:0}.cts-restart-feedback button{width:44px;height:44px;flex:0 0 44px;border:0;border-radius:var(--app-radius-sm,8px);background:transparent;color:inherit;cursor:pointer}.cts-restart-feedback button:hover{background:var(--app-accent-soft,rgba(59,130,246,.1))}.cts-restart-feedback button:focus-visible{outline:2px solid var(--app-danger,#b42318);outline-offset:2px}.cts-restart-feedback svg{width:18px;height:18px}
-@keyframes cts-restart-spin{to{transform:rotate(360deg)}}
 @media(max-width:480px){.cts-restart-confirm-dialog{padding:20px}.cts-restart-confirm-actions{flex-direction:column-reverse}.cts-restart-confirm-actions button{width:100%}}
-@media(prefers-reduced-motion:reduce){button.cpamp-theme-studio-restart-control,.cts-restart-confirm-actions button{transition:none}button.cpamp-theme-studio-restart-control[aria-busy='true'] svg{animation:none}}
+@media(prefers-reduced-motion:reduce){.cts-restart-confirm-actions button{transition:none}}
 `;
 
     var studioCSS = String.raw`
@@ -623,53 +616,99 @@ button.cpamp-theme-studio-restart-control[aria-busy='true'] svg{animation:cts-re
       return null;
     }
 
-    function restartControlTemplate(container) {
-      if (!container) return null;
-      if (container.matches && container.matches('[role="row"]')) return findEditConfigButton(container);
-      return findManageButton(container);
+    function findOverflowMenuTrigger(container) {
+      var buttons = container ? container.querySelectorAll('button[aria-haspopup="menu"]') : [];
+      for (var index = 0; index < buttons.length; index += 1) {
+        if (buttons[index].getAttribute('aria-controls')) return buttons[index];
+      }
+      return null;
+    }
+
+    function findControlledMenu(trigger) {
+      if (!trigger || trigger.getAttribute('aria-expanded') !== 'true') return null;
+      var menuID = trigger.getAttribute('aria-controls');
+      var menu = menuID ? doc.getElementById(menuID) : null;
+      if (menu && menu.getAttribute('role') === 'menu') return menu;
+
+      var label = normalizedControlLabel(trigger.getAttribute('aria-label'));
+      var menus = doc.querySelectorAll('[role="menu"]');
+      for (var index = 0; index < menus.length; index += 1) {
+        if (normalizedControlLabel(menus[index].getAttribute('aria-label')) === label) return menus[index];
+      }
+      return null;
+    }
+
+    function findReinstallMenuItem(menu) {
+      var items = menu ? menu.querySelectorAll('[role="menuitem"]') : [];
+      var labels = ['重新安装', '重新安裝', 'Reinstall', 'Переустановить'];
+      for (var index = 0; index < items.length; index += 1) {
+        if (!items[index].hasAttribute('data-cpamp-theme-studio-restart') && matchesOneOf(buttonLabel(items[index]), labels)) return items[index];
+      }
+      return null;
     }
 
     function setRestartControlState(control, busy, label) {
       if (!control) return;
       var text = control.querySelector('[data-restart-label]');
-      if (text) text.textContent = label || tr('restartAction');
+      if (text) text.textContent = label || tr('restartMenuAction');
       control.disabled = Boolean(busy);
       control.setAttribute('aria-busy', busy ? 'true' : 'false');
-      control.setAttribute('aria-label', label || tr('restartAction'));
-      control.setAttribute('title', label || tr('restartAction'));
+      control.setAttribute('aria-label', label || tr('restartMenuAction'));
+      control.setAttribute('title', label || tr('restartMenuAction'));
     }
 
     function syncRestartControls() {
       var controls = doc.querySelectorAll('[data-cpamp-theme-studio-restart="true"]');
       for (var index = 0; index < controls.length; index += 1) {
-        setRestartControlState(controls[index], restartBusy, restartBusyLabel || tr('restartAction'));
+        setRestartControlState(controls[index], restartBusy, restartBusyLabel || tr('restartMenuAction'));
       }
     }
 
-    function createRestartControl(template) {
-      var control = doc.createElement('button');
-      control.type = 'button';
-      control.className = ((template && template.className) || '') + ' cpamp-theme-studio-restart-control';
+    function createRestartMenuItem(template, origin, trigger) {
+      var control = template.cloneNode(true);
       control.setAttribute('data-cpamp-theme-studio-restart', 'true');
-      control.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8.1 8.1 0 1 0 2 5.3"/><path d="M20 4v7h-7"/></svg><span data-restart-label></span>';
-      setRestartControlState(control, restartBusy, restartBusyLabel || tr('restartAction'));
-      control.addEventListener('click', handleRestartControlClick);
+      control.removeAttribute('id');
+      var descendantsWithID = control.querySelectorAll('[id]');
+      for (var idIndex = 0; idIndex < descendantsWithID.length; idIndex += 1) descendantsWithID[idIndex].removeAttribute('id');
+
+      var spans = control.querySelectorAll('span');
+      var text = spans.length ? spans[spans.length - 1] : null;
+      if (!text) {
+        text = doc.createElement('span');
+        control.appendChild(text);
+      }
+      text.setAttribute('data-restart-label', 'true');
+      setRestartControlState(control, restartBusy, restartBusyLabel || tr('restartMenuAction'));
+      control.addEventListener('click', function (event) {
+        handleRestartControlClick(event, origin, trigger);
+      }, true);
       return control;
     }
 
-    function ensureRestartControl(container) {
-      if (!container || !isThemeStudioContainer(container) || container.querySelector('[data-cpamp-theme-studio-restart="true"]')) return;
-      var template = restartControlTemplate(container);
+    function ensureRestartMenuItem(container) {
+      if (!container || !isThemeStudioContainer(container)) return;
+      var trigger = findOverflowMenuTrigger(container);
+      var menu = findControlledMenu(trigger);
+      if (!menu || menu.querySelector('[data-cpamp-theme-studio-restart="true"]')) return;
+      var template = findReinstallMenuItem(menu);
       if (!template || !template.parentElement) return;
-      var control = createRestartControl(template);
-      template.parentElement.insertBefore(control, template.nextSibling);
+      var control = createRestartMenuItem(template, container, trigger);
+      template.parentElement.insertBefore(control, template);
     }
 
-    function ensureRestartControls() {
+    function removeLegacyRestartControls() {
+      var controls = doc.querySelectorAll('[data-cpamp-theme-studio-restart="true"]');
+      for (var index = 0; index < controls.length; index += 1) {
+        if (!controls[index].closest('[role="menu"]') && controls[index].parentElement) controls[index].parentElement.removeChild(controls[index]);
+      }
+    }
+
+    function ensureRestartMenuItems() {
+      removeLegacyRestartControls();
       var rows = doc.querySelectorAll('[role="row"]');
-      for (var rowIndex = 0; rowIndex < rows.length; rowIndex += 1) ensureRestartControl(rows[rowIndex]);
+      for (var rowIndex = 0; rowIndex < rows.length; rowIndex += 1) ensureRestartMenuItem(rows[rowIndex]);
       var articles = doc.querySelectorAll('article');
-      for (var articleIndex = 0; articleIndex < articles.length; articleIndex += 1) ensureRestartControl(articles[articleIndex]);
+      for (var articleIndex = 0; articleIndex < articles.length; articleIndex += 1) ensureRestartMenuItem(articles[articleIndex]);
       syncRestartControls();
     }
 
@@ -947,13 +986,16 @@ button.cpamp-theme-studio-restart-control[aria-busy='true'] svg{animation:cts-re
       }).catch(finishRestartControl);
     }
 
-    function handleRestartControlClick(event) {
+    function handleRestartControlClick(event, origin, menuTrigger) {
       if (restartBusy || restartConfirmLayer) return;
       event.preventDefault();
       event.stopPropagation();
-      var origin = event.currentTarget && event.currentTarget.closest ? event.currentTarget.closest('[role="row"],article') : null;
+      if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
       var control = event.currentTarget;
-      confirmRestart(control).then(function (confirmed) {
+      if (!origin || !origin.isConnected) origin = findInstalledPluginRow();
+      if (menuTrigger && menuTrigger.isConnected && menuTrigger.getAttribute('aria-expanded') === 'true') menuTrigger.click();
+      var focusOrigin = menuTrigger && menuTrigger.isConnected ? menuTrigger : control;
+      confirmRestart(focusOrigin).then(function (confirmed) {
         if (confirmed) startRestart(origin);
       });
     }
@@ -1086,7 +1128,7 @@ button.cpamp-theme-studio-restart-control[aria-busy='true'] svg{animation:cts-re
       if (!doc.body) return false;
       if (isMounted()) {
         bindHostThemeControl();
-        ensureRestartControls();
+        ensureRestartMenuItems();
         publishRuntime();
         return true;
       }
@@ -1116,7 +1158,7 @@ button.cpamp-theme-studio-restart-control[aria-busy='true'] svg{animation:cts-re
         }
       });
       bindHostThemeControl();
-      ensureRestartControls();
+      ensureRestartMenuItems();
       publishRuntime();
       refreshControls();
       if (openRequested) revealStage();
@@ -1132,7 +1174,7 @@ button.cpamp-theme-studio-restart-control[aria-busy='true'] svg{animation:cts-re
         ensureThemeStyle();
         ensureMounted();
         bindHostThemeControl();
-        ensureRestartControls();
+        ensureRestartMenuItems();
       });
     }
 

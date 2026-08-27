@@ -332,6 +332,10 @@ func TestLoaderRuntimeContract(t *testing.T) {
 		"data-cpamp-theme-studio-trigger",
 		"doc.querySelectorAll('button')",
 		"data-cpamp-theme-studio-restart",
+		"restartMenuAction: '重新启动'",
+		"findReinstallMenuItem",
+		"template.cloneNode(true)",
+		"template.parentElement.insertBefore(control, template)",
 		"plugin-field-restart_request",
 		"restart-status",
 		"role', 'alertdialog",
@@ -362,5 +366,8 @@ func TestLoaderRuntimeContract(t *testing.T) {
 	}
 	if strings.Contains(loader, "win.alert(") {
 		t.Fatal("loader must report restart errors without a blocking browser-native alert")
+	}
+	if strings.Contains(loader, "cpamp-theme-studio-restart-control") {
+		t.Fatal("loader must place restart in the native overflow menu instead of publishing a standalone control")
 	}
 }

@@ -35,7 +35,7 @@ Future CPA and CPAMP versions are expected to work while their plugin ABI and si
 - Simplified Chinese, Traditional Chinese, English, and Russian UI.
 - Shadow DOM isolation, keyboard focus handling, reduced-motion support, and mobile layout.
 - Reuses CPAMP's native top-right Theme control as the single entry point; no floating or sidebar duplicate.
-- Adds a confirmed `Restart CPA` control to the installed-plugin row and Plugin Store card. A one-time Linux bootstrap lets that control and future marketplace installs restart, verify, and roll back CPA without a deployment Agent.
+- Adds a confirmed `Restart` item directly above `Reinstall` in Theme Studio's native overflow menu. A one-time Linux bootstrap lets that action and future marketplace installs restart, verify, and roll back CPA without a deployment Agent.
 - Idempotent runtime recovery and reinjection after SPA or upstream panel updates.
 - Deterministic cleanup on hot disable; normal process-shutdown cleanup is best effort.
 
@@ -68,7 +68,7 @@ After saving and reloading the configuration:
 1. Open CPAMP, then Plugins → Plugin Store.
 2. Confirm that the sources include `raw.githubusercontent.com` and search for `CPAMP Theme Studio`.
 3. Choose Latest or `0.2.0` and install it. CPAMP/CPA downloads the matching pinned Release archive, verifies the SHA-256 carried by the store registry, writes a versioned library under `<dir>/<goos>/<goarch>/`, and creates the enabled plugin configuration.
-4. With bootstrap installed, the marketplace write itself triggers a bound systemd broker. It waits for the library/config to settle, restarts CPA, verifies the requested version and real panel, and accepts it; a failed deployment is removed and the previous accepted plugin/config is restored. The card's confirmed `Restart CPA` control uses the same broker. Without bootstrap or on other platforms, restart the effective CPA service manually.
+4. With bootstrap installed, the marketplace write itself triggers a bound systemd broker. It waits for the library/config to settle, restarts CPA, verifies the requested version and real panel, and accepts it; a failed deployment is removed and the previous accepted plugin/config is restored. The confirmed `Restart` item in Theme Studio's overflow menu uses the same broker. Without bootstrap or on other platforms, restart the effective CPA service manually.
 5. Return to the CPAMP dashboard and click the existing Theme control in the top-right action row. The plugin replaces that control's behavior without adding another floating button.
 
 The hidden read-only resource used by the injected loader and bundled fonts is:
@@ -170,8 +170,8 @@ Before stopping CPA for an upgrade, rollback, or uninstall, hot-disable this plu
 - Palette persistence across reload and 390×844 responsive layout
 - Panel overwrite followed by automatic reinjection
 - Hot disable followed by exact restoration of the original CPAMP SHA-256
-- Installed-row and store-card restart controls, safe cancellation, one-time request persistence, supervised process replacement, loader recovery, and automatic refresh
-- Restart confirmation focus handling, 44 px controls, light/dark danger styling, reduced motion, and a 375×812 layout without horizontal overflow
+- Native overflow-menu restart items above `Reinstall`, safe cancellation, one-time request persistence, supervised process replacement, loader recovery, and automatic refresh
+- Restart confirmation focus handling, host-native menu styling and iconography, reduced motion, and a 375×812 layout without horizontal overflow
 - Linux bootstrap dry-run/apply against a real systemd-managed CPA v7.2.138 fixture
 - Marketplace file/config change followed by automatic restart, plugin registration, resource version, and singleton panel-marker acceptance
 - Confirmed card broker restart plus a deliberately damaged `.so` upgrade followed by automatic plugin/config rollback and previous-version recovery

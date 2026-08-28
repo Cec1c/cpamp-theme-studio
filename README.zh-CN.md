@@ -7,6 +7,7 @@
 [![CPA](https://img.shields.io/badge/CPA-v7.2.138-2563EB?style=flat-square)](https://github.com/router-for-me/CLIProxyAPI)
 [![CPAMP](https://img.shields.io/badge/CPAMP-v1.12.2-0EA5E9?style=flat-square)](https://github.com/seakee/CPA-Manager-Plus)
 [![许可](https://img.shields.io/badge/许可-MIT-16A34A?style=flat-square)](LICENSE)
+[![LINUX DO](https://img.shields.io/badge/LINUX.DO-%E5%8F%8B%E9%93%BE-111827?style=flat-square)](https://linux.do/)
 
 通过 CPA/CPAMP 插件市场交付的主题扩展。无需维护面板 fork，即可为 CPA Manager Plus 增加持久化、多语言的可视化主题工作室。
 

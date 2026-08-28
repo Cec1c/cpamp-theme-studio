@@ -7,6 +7,7 @@
 [![CPA](https://img.shields.io/badge/CPA-v7.2.138-2563EB?style=flat-square)](https://github.com/router-for-me/CLIProxyAPI)
 [![CPAMP](https://img.shields.io/badge/CPAMP-v1.12.2-0EA5E9?style=flat-square)](https://github.com/seakee/CPA-Manager-Plus)
 [![License](https://img.shields.io/badge/License-MIT-16A34A?style=flat-square)](LICENSE)
+[![LINUX DO](https://img.shields.io/badge/LINUX.DO-%E5%8F%8B%E9%93%BE-111827?style=flat-square)](https://linux.do/)
 
 A Plugin Store-delivered theme extension that adds a persistent, multilingual visual studio to CPA Manager Plus without maintaining a panel fork.
 

@@ -9,7 +9,7 @@
 [![License](https://img.shields.io/badge/License-MIT-16A34A?style=flat-square)](LICENSE)
 [![LINUX DO](https://img.shields.io/badge/LINUX.DO-%E5%8F%8B%E9%93%BE-111827?style=flat-square)](https://linux.do/)
 
-A Plugin Store-delivered theme extension that adds a persistent, multilingual visual studio to CPA Manager Plus without maintaining a panel fork.
+Install from the CPA/CPAMP Plugin Store, then open the panel's top-right Theme control to adjust colors, fonts, radii, and layout. Changes preview immediately, preferences stay in your browser, and the studio supports multiple languages.
 
 [简体中文](README.zh-CN.md) ｜ [Quick start](#quick-start) ｜ [Linux bootstrap](docs/BOOTSTRAP.md) ｜ [Deployment guide](docs/DEPLOYMENT.md)
 
@@ -18,7 +18,7 @@ A Plugin Store-delivered theme extension that adds a persistent, multilingual vi
 ## What can Theme Studio do?
 
 - **Restyle the panel at any time.** Use CPAMP Blue, nine additional palettes, a custom accent, light/dark modes, fonts, radii, density, layout, and visual effects.
-- **Reuse the native Theme entry point.** The existing top-right Theme control opens the studio; no duplicate floating button or sidebar item is added.
+- **Open it from the native Theme control.** The studio connects to the panel's existing top-right entry point.
 - **Keep preferences stable.** Every change previews immediately and persists in the browser, with legacy migration and one-click reset.
 - **Survive panel updates.** If upstream replaces `management.html`, the watcher restores one marked loader block; disabling the plugin removes only that block.
 - **Complete Linux updates safely.** After one bootstrap, marketplace installs, upgrades, and confirmed restarts can restart CPA, accept the new version, or roll back a failed deployment.
@@ -38,9 +38,9 @@ A Plugin Store-delivered theme extension that adds a persistent, multilingual vi
 
 ### Linux + systemd (recommended)
 
-Run the administrator-reviewed bootstrap once, then install Theme Studio from the CPAMP Plugin Store. Bootstrap is not required for the theme itself; it prepares trusted paths, installs the restart broker, and enables failed-update rollback. Without it, the plugin still works, but CPA must be restarted manually after each install or upgrade.
+Run bootstrap once to prepare paths, automatic restarts, and failed-update rollback, then install Theme Studio from the CPAMP Plugin Store. You can also install the plugin directly and restart CPA manually after each install or upgrade.
 
-Pin the current Release, verify the script, and run a dry-run first:
+The example below uses v0.2.2. Download and verify the script, then preview the deployment plan:
 
 ```bash
 version=0.2.2
@@ -65,7 +65,7 @@ sudo ./bootstrap-linux.sh \
   --panel-url https://example.com/management.html
 ```
 
-If discovery finds multiple candidates, add explicit `--service`, `--config`, and `--panel-path` values as reported by the dry-run. Manager Server deployments require the exact public `--panel-url`; it is also strongly recommended for the CPA Lightweight Panel so the selected local file is proven to be the live page.
+If discovery finds multiple candidates, use `--service`, `--config`, and `--panel-path` to select the instance shown in the preview. Manager Server deployments require the exact public `--panel-url`; supplying it for the Lightweight Panel also lets bootstrap compare the local file with the served page.
 
 After bootstrap:
 
@@ -73,7 +73,7 @@ After bootstrap:
 2. Search for `CPAMP Theme Studio`, choose Latest, and install.
 3. Wait for CPA to restart, return to the dashboard, and click the existing top-right Theme control.
 
-Bootstrap adds this project's community source to CPA's effective configuration, so there is no separate store-source step.
+Bootstrap adds this project's community source to CPA's effective configuration.
 
 ### Windows, macOS, or non-systemd
 
@@ -99,9 +99,9 @@ Install from the Plugin Store, then restart the CPA process or service that actu
 | broker | Watches marketplace writes or restart requests, waits for stable files, restarts only the bound CPA unit, verifies PID/service/resource/panel state, and restores the last accepted version on failure |
 | Theme Studio plugin | Serves browser resources and maintains one loader block in `management.html`; it does not read model credentials or participate in provider/request routing |
 
-The broker is not a network proxy and does not download plugins. It is a constrained root execution chain. The browser and plugin can create only a small request file; they cannot supply arbitrary service names or call `systemctl` directly.
+The Plugin Store downloads, verifies, and installs each version. The broker restarts the bound CPA unit, checks the result, and rolls back failures. The broker operates on that service as root. The browser and plugin can only submit a fixed-format request file; the administrator binds the target service during bootstrap.
 
-Bootstrap could technically unpack the `.so` that is already present in the Release archive, but that would bypass the CPA store's platform selection, version configuration, verification, and UI state, creating a second installer. The current design deliberately leaves installation to the store and gives the broker only post-install restart, acceptance, and rollback duties. Bootstrap therefore runs once; later marketplace updates do not rerun the script.
+Run bootstrap once, then use the Plugin Store for later updates.
 
 ## Panel support
 
@@ -111,9 +111,9 @@ Bootstrap could technically unpack the `.so` that is already present in the Rele
 | CPAMP Manager Server with external `PANEL_PATH` | **Supported with configuration** | CPA and Manager Server share one writable file, and bootstrap receives the exact public `--panel-url` |
 | Manager Server with an embedded-only panel | **Externalized by Linux bootstrap** | Direct Linux/systemd deployment and an active public `--panel-url` |
 
-The CPA Lightweight Panel is the simplest and most direct mode. With an empty `panel_path`, the plugin accepts only one unambiguous explicit environment path or one existing `static/management.html` near CPA's working directory, executable, or config. Multiple candidates stop injection instead of being guessed.
+The CPA Lightweight Panel connects directly. With an empty `panel_path`, the plugin checks explicit environment paths and `static/management.html` near CPA's working directory, executable, or config. It injects only when there is one candidate; set an explicit path if several are found.
 
-The plugin cannot rewrite a page embedded in another Manager Server process. Linux bootstrap can download the active page into an external `PANEL_PATH`, bind CPA and Manager Server to that file, and verify the public result.
+For an embedded Manager Server page, Linux bootstrap downloads the active page into an external `PANEL_PATH`, binds CPA and Manager Server to that file, and verifies the served result.
 
 ## Compatibility baseline
 
@@ -127,7 +127,7 @@ The plugin cannot rewrite a page embedded in another Manager Server process. Lin
 | macOS | amd64, arm64 | Native CI/Release targets |
 | Windows | arm64 | Native Release target; review the release workflow before production use |
 
-Later releases should continue to work while CPA's plugin ABI and CPAMP's single-file panel structure remain compatible, but production upgrades should still be validated against the deployment guide.
+When upgrading CPA or CPAMP, use the deployment guide to check the plugin ABI, single-file panel structure, and target deployment mode.
 
 ## How it works
 
@@ -136,8 +136,6 @@ Later releases should continue to work while CPA's plugin ABI and CPAMP's single
 3. The injector adds one marked loader block to a trusted writable `management.html`.
 4. The loader mounts Theme Studio in Shadow DOM and applies preferences through CPAMP CSS variables and compatible local theme stores.
 5. The watcher restores the loader after a panel overwrite; hot-disable removes it deterministically.
-
-The plugin does not intercept CPA requests, read or proxy credentials, expose arbitrary files, or publish an unauthenticated restart endpoint.
 
 ## Development and validation
 

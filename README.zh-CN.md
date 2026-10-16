@@ -9,7 +9,7 @@
 [![许可](https://img.shields.io/badge/许可-MIT-16A34A?style=flat-square)](LICENSE)
 [![LINUX DO](https://img.shields.io/badge/LINUX.DO-%E5%8F%8B%E9%93%BE-111827?style=flat-square)](https://linux.do/)
 
-通过 CPA/CPAMP 插件市场交付的主题扩展。无需维护面板 fork，即可为 CPA Manager Plus 增加持久化、多语言的可视化主题工作室。
+从 CPA/CPAMP 插件市场安装后，点击面板右上角“主题”，即可调整配色、字体、圆角和布局。修改即时预览，偏好保存在浏览器中，工作室支持多语言。
 
 [English](README.md) ｜ [快速安装](#快速安装) ｜ [Linux bootstrap](docs/BOOTSTRAP.zh-CN.md) ｜ [完整部署文档](docs/DEPLOYMENT.zh-CN.md)
 
@@ -18,7 +18,7 @@
 ## 主题工作室能做什么？
 
 - **随时改变面板观感。** 内置 CPAMP 蓝与九套独立配色，支持自定义强调色、明暗模式、字体、圆角、密度、布局和视觉效果。
-- **直接复用原生主题入口。** 点击面板右上角原有“主题”控件即可打开工作室，不生成重复的悬浮按钮或侧栏菜单。
+- **从原生主题入口打开。** 工作室接入面板右上角现有的“主题”控件。
 - **让偏好稳定保留。** 所有设置即时预览并保存在浏览器本地，支持旧偏好迁移与一键重置。
 - **经得起面板更新。** 上游覆盖 `management.html` 后，插件 watcher 会重新注入唯一 loader；停用时只清理自己的标记块。
 - **安全完成 Linux 更新。** 一次 bootstrap 后，市场安装、升级和手动“重新启动”都能自动重启 CPA、验收新版本，并在失败时回滚。
@@ -38,9 +38,9 @@
 
 ### Linux + systemd（推荐）
 
-先执行一次管理员核对过的 bootstrap，再从 CPAMP 插件市场安装。bootstrap 不是主题功能的运行依赖；它负责准备路径、安装安全重启链和提供失败回滚。未安装 bootstrap 时也能使用插件，但每次安装或升级后要手工重启 CPA。
+推荐先执行一次 bootstrap，准备路径、自动重启和失败回滚，再从 CPAMP 插件市场安装。也可直接安装主题插件，并在每次安装或升级后手工重启 CPA。
 
-固定当前 Release、校验脚本，然后先 dry-run：
+以下以 v0.2.2 为例。下载脚本、校验后，先预览部署计划：
 
 ```bash
 version=0.2.2
@@ -65,7 +65,7 @@ sudo ./bootstrap-linux.sh \
   --panel-url https://example.com/management.html
 ```
 
-如果自动发现存在多个候选，请按 dry-run 提示显式补充 `--service`、`--config` 和 `--panel-path`。Manager Server 部署必须提供准确的公网 `--panel-url`；CPA 原版轻量面板也强烈建议提供，以证明本地文件就是实际访问的页面。
+发现多个候选时，按预览结果补充 `--service`、`--config` 和 `--panel-path`，选定目标实例。Manager Server 部署必须提供准确的公网 `--panel-url`；轻量面板也建议提供，便于核对本地文件与实际访问页面。
 
 完成 bootstrap 后：
 
@@ -73,7 +73,7 @@ sudo ./bootstrap-linux.sh \
 2. 搜索 `CPAMP Theme Studio`，选择 Latest 并安装。
 3. 等待 CPA 自动重启，回到仪表盘，点击右上角原有“主题”控件。
 
-bootstrap 已经把本项目社区源合并进 CPA 的有效配置，因此不需要再手工添加商店地址。
+bootstrap 会将本项目社区源加入 CPA 的有效配置。
 
 ### Windows、macOS 或非 systemd 环境
 
@@ -99,9 +99,9 @@ plugins:
 | broker | 监听市场写入或重启请求，等待文件稳定，只重启已绑定的 CPA，验证 PID、服务、资源版本和真实面板；失败时恢复上一个 accepted 版本 |
 | Theme Studio 插件 | 提供浏览器资源并维护 `management.html` 中的 loader 标记，不读取模型凭据，也不参与 Provider 或请求转发 |
 
-broker 不是网络代理，也不会“爬取”插件。它是一条权限受限的 root 执行链：浏览器和插件只能创建一个小型请求文件，不能传入任意服务名，也不能直接调用 `systemctl`。
+插件市场负责下载、校验和安装，broker 负责重启已绑定的 CPA unit、验收及回滚。broker 以 root 身份操作已绑定的服务。浏览器和插件只能提交固定格式的请求文件；目标服务由管理员在 bootstrap 时绑定。
 
-技术上可以让 bootstrap 顺便解出 `.so`，但这会绕过 CPA 市场的版本配置、平台选择、校验和 UI 状态，形成第二套安装器。当前设计刻意让市场负责安装，让 broker 只负责安装后的重启、验收和回滚；因此 bootstrap 只需执行一次，后续市场更新不需要重新运行脚本。
+bootstrap 执行一次后，后续版本继续从插件市场更新。
 
 ## 面板支持
 
@@ -111,9 +111,9 @@ broker 不是网络代理，也不会“爬取”插件。它是一条权限受�
 | 使用外置 `PANEL_PATH` 的 CPAMP Manager Server | **有条件支持** | CPA 与 Manager Server 共享同一个可写文件，并向 bootstrap 提供准确的公网 `--panel-url` |
 | 只有内嵌面板的 Manager Server | **Linux bootstrap 可外置** | 直接部署在 Linux/systemd，并提供活动公网 `--panel-url` |
 
-CPA 原版轻量面板是最简单、支持最直接的模式。`panel_path` 留空时，插件只接受唯一且无冲突的显式环境路径，或 CPA 工作目录、可执行文件、配置文件附近唯一存在的 `static/management.html`；存在多个候选时会停止，不会猜测。
+CPA 原版轻量面板可直接接入。`panel_path` 留空时，插件查找显式环境路径，或 CPA 工作目录、可执行文件、配置文件附近的 `static/management.html`。只有唯一候选时才注入；多个候选需显式指定路径。
 
-插件本身不能修改另一个 Manager Server 进程里的内嵌页面。Linux bootstrap 可以把活动面板下载为外置 `PANEL_PATH`，让 CPA 和 Manager Server 绑定同一个文件，再验证公网页面。
+Manager Server 使用内嵌页面时，Linux bootstrap 会先将活动面板下载到外置 `PANEL_PATH`，让 CPA 与 Manager Server 共享该文件，再验证公网页面。
 
 ## 兼容基线
 
@@ -127,7 +127,7 @@ CPA 原版轻量面板是最简单、支持最直接的模式。`panel_path` 留
 | macOS | amd64、arm64 | 原生 CI/Release 构建目标 |
 | Windows | arm64 | 原生 Release 构建目标；生产使用前应复核发布工作流 |
 
-未来版本只要 CPA 插件 ABI 与 CPAMP 单文件面板结构保持兼容，通常可以继续工作；生产升级前仍应按部署文档重新验证。
+升级 CPA 或 CPAMP 时，按部署文档核对插件 ABI、单文件面板结构和目标部署方式。
 
 ## 工作原理
 
@@ -136,8 +136,6 @@ CPA 原版轻量面板是最简单、支持最直接的模式。`panel_path` 留
 3. 注入器在可信、可写的 `management.html` 中插入唯一 start/end 标记块。
 4. loader 在 Shadow DOM 中挂载主题工作室，通过 CPAMP CSS 变量和兼容的本地主题存储应用偏好。
 5. watcher 在面板被覆盖后恢复 loader；热停用时确定性移除标记。
-
-插件不会拦截 CPA 请求、读取或代理凭据、暴露任意文件，也不会发布未认证的重启接口。
 
 ## 开发与验证
 
